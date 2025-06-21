@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 350px;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .logo {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    
+    .config-section {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+    
+    .input-group {
+      margin-bottom: 10px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #374151;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    
+    .form-group {
+      margin-bottom: 10px;
+    }
+    
+    .form-control {
+      width: 100%;
+    }
+    
+    .btn-small {
+      width: auto;
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+    
+    .btn-secondary {
+      background: #6b7280;
+    }
+    
+    .btn-secondary:hover {
+      background: #4b5563;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    
+    .btn:hover {
+      background: #0052a3;
+    }
+    
+    .btn:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    
+    .btn.create-db {
+      background: #059669;
+      margin-bottom: 15px;
+    }
+    
+    .btn.create-db:hover {
+      background: #047857;
+    }
+    
+    .divider {
+      border-top: 1px solid #e5e7eb;
+      margin: 20px 0;
+    }
+    
+    .status {
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    
+    .success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+    
+    .preview {
+      background: #f3f4f6;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    /* 主要操作按鈕區域 */
+    .main-actions {
+      margin-bottom: 15px;
+    }
+    
+    /* 可折疊區塊樣式 */
+    .collapsible-section {
+      margin-bottom: 10px;
+    }
+    
+    .section-toggle {
+      width: 100%;
+      padding: 12px 15px;
+      background: #f8f9fa;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+    
+    .section-toggle:hover {
+      background: #e5e7eb;
+    }
+    
+    .section-toggle.active {
+      background: #dbeafe;
+      border-color: #93c5fd;
+    }
+    
+    .toggle-icon {
+      transition: transform 0.3s ease;
+    }
+    
+    .section-toggle.active .toggle-icon {
+      transform: rotate(-180deg);
+    }
+    
+    .collapsible-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      border: none;
+      background: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .collapsible-content.active {
+      max-height: 500px;
+      padding: 15px;
+      background: #f8f9fa;
+      border: 1px solid #e5e7eb;
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">📋</div>
+    <h3>LinkedIn 職缺抓取器</h3>
+  </div>
+
+  <!-- 主要功能按鈕 -->
+  <div class="main-actions">
+    <button class="btn" id="scrapeBtn">🚀 抓取職缺</button>
+    <button class="btn btn-secondary" id="previewBtn">👁️ 預覽資料</button>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 可折疊的設定區塊 -->
+  <div class="collapsible-section">
+    <button class="section-toggle" id="notionToggle">
+      <span>⚙️ Notion 設定</span>
+      <span class="toggle-icon">▼</span>
+    </button>
+    <div class="config-section collapsible-content" id="notionConfig">
+      <div class="input-group">
+        <label>Integration Token:</label>
+        <input type="password" id="notionToken" placeholder="secret_...">
+      </div>
+      <div class="input-group">
+        <label>Database ID:</label>
+        <input type="text" id="databaseId" placeholder="資料庫 ID">
+      </div>
+      <button class="btn create-db" id="createDbBtn">🏗️ 自動建立資料庫</button>
+      <button class="btn" id="saveConfig">💾 儲存設定</button>
+    </div>
+  </div>
+
+  <div class="collapsible-section">
+    <button class="section-toggle" id="aiToggle">
+      <span>🤖 AI 設定</span>
+      <span class="toggle-icon">▼</span>
+    </button>
+    <div class="config-section collapsible-content" id="aiConfig">
+      <div class="form-group">
+        <label for="aiProvider">AI 平台：</label>
+        <select id="aiProvider" class="form-control">
+          <option value="openai">OpenAI</option>
+          <option value="openrouter">OpenRouter</option>
+          <!-- 未來可以輕鬆添加更多提供商 -->
+          <!-- <option value="anthropic">Anthropic</option> -->
+          <!-- <option value="google">Google AI</option> -->
+          <!-- <option value="azure">Azure OpenAI</option> -->
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="aiApiKey">API Key：</label>
+        <input type="password" id="aiApiKey" class="form-control" placeholder="輸入 AI API Key">
+      </div>
+      
+      <div class="form-group">
+        <label for="aiModel">模型：</label>
+        <select id="aiModel" class="form-control">
+          <option value="">選擇模型...</option>
+        </select>
+        <button id="loadModels" class="btn btn-small btn-secondary" style="margin-top: 5px;">🔄 載入模型列表</button>
+      </div>
+      
+      <button id="saveAiConfig" class="btn btn-secondary">💾 儲存 AI 設定</button>
+    </div>
+  </div>
+
+  <div id="status"></div>
+  <div id="preview"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
