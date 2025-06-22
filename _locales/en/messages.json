@@ -1,0 +1,234 @@
+{
+  "extensionName": {
+    "message": "Universal Job Scraper",
+    "description": "Extension name"
+  },
+  "extensionDescription": {
+    "message": "One-click scrape jobs from multiple job sites to Notion",
+    "description": "Extension description"
+  },
+  "popupTitle": {
+    "message": "Scrape Job to Notion",
+    "description": "Popup action title"
+  },
+  
+  "headerTitle": {
+    "message": "Universal Job Scraper",
+    "description": "Header title in popup"
+  },
+  
+  "aiToggleLabel": {
+    "message": "🤖 Enable AI Analysis",
+    "description": "AI toggle checkbox label"
+  },
+  "aiToggleHelp": {
+    "message": "When enabled, AI will analyze jobs and extract structured information",
+    "description": "AI toggle help text"
+  },
+  
+  "scrapeJobBtn": {
+    "message": "🚀 Scrape Job",
+    "description": "Main scrape button"
+  },
+  "previewBtn": {
+    "message": "👁️ Preview Data",
+    "description": "Preview button"
+  },
+  "debugBtn": {
+    "message": "🔍 Debug Page Elements",
+    "description": "Debug button"
+  },
+  
+  "notionConfigTitle": {
+    "message": "⚙️ Notion Configuration",
+    "description": "Notion configuration section title"
+  },
+  "aiConfigTitle": {
+    "message": "🤖 AI Configuration",
+    "description": "AI configuration section title"
+  },
+  
+  "notionTokenLabel": {
+    "message": "Integration Token:",
+    "description": "Notion token input label"
+  },
+  "notionTokenPlaceholder": {
+    "message": "secret_...",
+    "description": "Notion token input placeholder"
+  },
+  "databaseIdLabel": {
+    "message": "Database ID:",
+    "description": "Database ID input label"
+  },
+  "databaseIdPlaceholder": {
+    "message": "Database ID",
+    "description": "Database ID input placeholder"
+  },
+  
+  "createDbBtn": {
+    "message": "🏗️ Auto Create Database",
+    "description": "Create database button"
+  },
+  "saveConfigBtn": {
+    "message": "💾 Save Configuration",
+    "description": "Save configuration button"
+  },
+  "saveAiConfigBtn": {
+    "message": "💾 Save AI Configuration",
+    "description": "Save AI configuration button"
+  },
+  
+  "aiProviderLabel": {
+    "message": "AI Provider:",
+    "description": "AI provider select label"
+  },
+  "aiApiKeyLabel": {
+    "message": "API Key:",
+    "description": "AI API key input label"
+  },
+  "aiApiKeyPlaceholder": {
+    "message": "Enter AI API Key",
+    "description": "AI API key input placeholder"
+  },
+  "aiModelLabel": {
+    "message": "Model:",
+    "description": "AI model select label"
+  },
+  "aiModelPlaceholder": {
+    "message": "Select model...",
+    "description": "AI model select placeholder"
+  },
+  "loadModelsBtn": {
+    "message": "🔄 Load Model List",
+    "description": "Load models button"
+  },
+  
+  "statusConfigSaved": {
+    "message": "Configuration saved!",
+    "description": "Configuration saved status message"
+  },
+  "statusAiConfigSaved": {
+    "message": "AI configuration saved!",
+    "description": "AI configuration saved status message"
+  },
+  "statusScrapingJob": {
+    "message": "Scraping job data...",
+    "description": "Status message when scraping job"
+  },
+  "statusAnalyzingWithAI": {
+    "message": "Analyzing job data with AI...",
+    "description": "Status message when analyzing with AI"
+  },
+  "statusUploadingToNotion": {
+    "message": "Job data scraped successfully, uploading to Notion...",
+    "description": "Status message when uploading to Notion"
+  },
+  "statusAiEnabledButNotConfigured": {
+    "message": "AI enabled but not configured, uploading raw data...",
+    "description": "Status message when AI enabled but not configured"
+  },
+  "statusJobSavedWithAI": {
+    "message": "✅ Job successfully analyzed and saved to Notion!",
+    "description": "Success message when job saved with AI analysis"
+  },
+  "statusJobSavedWithoutAI": {
+    "message": "✅ Job saved to Notion (without AI analysis)",
+    "description": "Success message when job saved without AI"
+  },
+  "statusJobSaved": {
+    "message": "✅ Job successfully saved to Notion!",
+    "description": "Success message when job saved"
+  },
+  
+  "errorNotJobPage": {
+    "message": "Please use this feature on a supported job page",
+    "description": "Error when not on a supported job page"
+  },
+  "errorIncompleteNotionConfig": {
+    "message": "Please complete the Notion configuration",
+    "description": "Error when Notion configuration is incomplete"
+  },
+  "errorIncompleteAiConfig": {
+    "message": "Please configure AI API Key and select a model first",
+    "description": "Error when AI configuration is incomplete"
+  },
+  "errorLoadingModels": {
+    "message": "Failed to load models: ",
+    "description": "Error when loading AI models fails"
+  },
+  "errorScraping": {
+    "message": "Scraping failed: ",
+    "description": "Error when scraping fails"
+  },
+  "errorAiAnalysis": {
+    "message": "AI analysis failed, using raw data: ",
+    "description": "Error when AI analysis fails"
+  },
+  "errorUploadToNotion": {
+    "message": "Failed to upload to Notion: ",
+    "description": "Error when uploading to Notion fails"
+  },
+  "errorCreateDatabase": {
+    "message": "Failed to create database: ",
+    "description": "Error when creating database fails"
+  },
+  
+  "successDatabaseCreated": {
+    "message": "✅ Database created successfully! Database ID has been automatically filled in.",
+    "description": "Success message when database is created"
+  },
+  "modelsLoaded": {
+    "message": "Models loaded successfully",
+    "description": "Success message when models are loaded"
+  },
+  
+  "statusCreatingDatabase": {
+    "message": "Creating Notion database...",
+    "description": "Status when creating database"
+  },
+  "statusDebugComplete": {
+    "message": "✅ Debug completed, check Console",
+    "description": "Debug completion message"
+  },
+  "statusDebugFailed": {
+    "message": "❌ Debug failed",
+    "description": "Debug failed message"
+  },
+  "statusDebugError": {
+    "message": "❌ Debug error: ",
+    "description": "Debug error message"
+  },
+  "statusProviderSwitched": {
+    "message": "Switched to",
+    "description": "Provider switched message"
+  },
+  "statusLoadingModels": {
+    "message": "Loading model list...",
+    "description": "Loading models status"
+  },
+  "statusAiEnabled": {
+    "message": "✅ AI analysis enabled",
+    "description": "AI enabled status"
+  },
+  "statusAiDisabled": {
+    "message": "ℹ️ AI analysis disabled, will use raw data",
+    "description": "AI disabled status"
+  },
+  
+  "languageToggle": {
+    "message": "🌐",
+    "description": "Language toggle button"
+  },
+  "switchToEnglish": {
+    "message": "Switch to English",
+    "description": "Switch to English tooltip"
+  },
+  "switchToChinese": {
+    "message": "切換到中文",
+    "description": "Switch to Chinese tooltip"
+  },
+  "languageSwitched": {
+    "message": "Language switched",
+    "description": "Language switched confirmation"
+  }
+}

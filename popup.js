@@ -7,14 +7,21 @@ class LinkedInJobExtension {
     this.aiApiKey = '';
     this.aiModel = '';
     this.enableAI = false;
+    this.currentLanguage = 'zh_TW'; // 預設語言
     this.init();
   }
 
   async init() {
+    // 初始化 i18n
+    this.initializeI18n();
+    
     // 載入儲存的設定
     const config = await chrome.storage.sync.get([
-      'notionToken', 'databaseId', 'aiProvider', 'aiConfigs', 'enableAI'
+      'notionToken', 'databaseId', 'aiProvider', 'aiConfigs', 'enableAI', 'preferredLanguage'
     ]);
+    
+    // 載入語言偏好設定
+    this.currentLanguage = config.preferredLanguage || this.getBrowserLanguage();
     
     // Notion 設定
     if (config.notionToken) {
@@ -58,15 +65,161 @@ class LinkedInJobExtension {
     // 綁定 AI 開關
     document.getElementById('enableAI').addEventListener('change', () => this.onAIToggleChange());
     
-    // 加入調試按鈕
-    const debugBtn = document.createElement('button');
-    debugBtn.textContent = '🔍 調試頁面元素';
-    debugBtn.className = 'btn';
-    debugBtn.style.background = '#059669';
-    debugBtn.style.fontSize = '12px';
-    debugBtn.style.padding = '8px';
-    debugBtn.addEventListener('click', () => this.debugPageElements());
-    document.querySelector('.divider').parentNode.insertBefore(debugBtn, document.querySelector('.divider'));
+    // 綁定語言切換按鈕
+    document.getElementById('languageToggle').addEventListener('click', () => this.toggleLanguage());
+    
+    // 加入調試按鈕（僅開發模式）
+    this.addDebugButton();
+  }
+
+  // 初始化國際化
+  initializeI18n() {
+    // 更新所有帶有 data-i18n 屬性的元素
+    document.querySelectorAll('[data-i18n]').forEach(element => {
+      const key = element.getAttribute('data-i18n');
+      const message = this.getMessage(key);
+      if (message) {
+        element.textContent = message;
+      }
+    });
+
+    // 更新所有帶有 data-i18n-placeholder 屬性的元素
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+      const key = element.getAttribute('data-i18n-placeholder');
+      const message = this.getMessage(key);
+      if (message) {
+        element.placeholder = message;
+      }
+    });
+    
+    // 更新語言切換按鈕的提示文字
+    this.updateLanguageToggleTooltip();
+  }
+
+  // 獲取瀏覽器語言
+  getBrowserLanguage() {
+    const language = chrome.i18n.getUILanguage();
+    if (language.startsWith('zh')) {
+      return 'zh_TW';
+    } else if (language.startsWith('en')) {
+      return 'en';
+    }
+    return 'zh_TW'; // 預設回到中文
+  }
+
+  // 獲取訊息 - 支援手動語言切換
+  getMessage(key) {
+    // 如果有手動設定語言偏好，優先使用
+    if (this.currentLanguage && this.currentLanguage !== this.getBrowserLanguage()) {
+      // 手動語言切換時，使用靜態翻譯表
+      return this.getStaticMessage(key, this.currentLanguage);
+    }
+    // 否則使用 Chrome 原生 i18n
+    return chrome.i18n.getMessage(key);
+  }
+
+  // 靜態翻譯表 - 用於手動語言切換
+  getStaticMessage(key, language) {
+    const messages = {
+      'zh_TW': {
+        'headerTitle': 'LinkedIn 職缺抓取器',
+        'aiToggleLabel': '🤖 啟用 AI 分析',
+        'aiToggleHelp': '開啟後將使用 AI 分析職缺並提取結構化資訊',
+        'scrapeJobBtn': '🚀 抓取職缺',
+        'previewBtn': '👁️ 預覽資料',
+        'debugBtn': '🔍 調試頁面元素',
+        'notionConfigTitle': '⚙️ Notion 設定',
+        'aiConfigTitle': '🤖 AI 設定',
+        'notionTokenLabel': 'Integration Token:',
+        'databaseIdLabel': 'Database ID:',
+        'createDbBtn': '🏗️ 自動建立資料庫',
+        'saveConfigBtn': '💾 儲存設定',
+        'saveAiConfigBtn': '💾 儲存 AI 設定',
+        'aiProviderLabel': 'AI 平台：',
+        'aiApiKeyLabel': 'API Key：',
+        'aiModelLabel': '模型：',
+        'loadModelsBtn': '🔄 載入模型列表',
+        'switchToEnglish': 'Switch to English',
+        'languageSwitched': '語言已切換',
+        'errorNotLinkedInPage': '請在 LinkedIn 職缺頁面使用此功能',
+        'errorIncompleteNotionConfig': '請填入完整的 Notion 設定',
+        'statusConfigSaved': '設定已儲存！',
+        'statusScrapingJob': '正在抓取職缺資料...',
+        'statusAnalyzingWithAI': '正在使用 AI 分析職缺資料...',
+        'statusUploadingToNotion': '資料抓取成功，正在上傳到 Notion...',
+        'statusJobSavedWithAI': '✅ 職缺已成功分析並儲存到 Notion！',
+        'statusJobSaved': '✅ 職缺已成功儲存到 Notion！',
+        'errorUploadToNotion': '❌ 操作失敗：',
+        'statusCreatingDatabase': '正在建立 Notion 資料庫...',
+        'successDatabaseCreated': '✅ 資料庫建立成功！Database ID 已自動填入。',
+        'errorCreateDatabase': '❌ 建立失敗：',
+        'statusDebugComplete': '✅ 調試完成，請查看 Console',
+        'statusDebugFailed': '❌ 調試失敗',
+        'statusDebugError': '❌ 調試錯誤：'
+      },
+      'en': {
+        'headerTitle': 'LinkedIn Job Scraper',
+        'aiToggleLabel': '🤖 Enable AI Analysis',
+        'aiToggleHelp': 'When enabled, AI will analyze jobs and extract structured information',
+        'scrapeJobBtn': '🚀 Scrape Job',
+        'previewBtn': '👁️ Preview Data',
+        'debugBtn': '🔍 Debug Page Elements',
+        'notionConfigTitle': '⚙️ Notion Configuration',
+        'aiConfigTitle': '🤖 AI Configuration',
+        'notionTokenLabel': 'Integration Token:',
+        'databaseIdLabel': 'Database ID:',
+        'createDbBtn': '🏗️ Auto Create Database',
+        'saveConfigBtn': '💾 Save Configuration',
+        'saveAiConfigBtn': '💾 Save AI Configuration',
+        'aiProviderLabel': 'AI Provider:',
+        'aiApiKeyLabel': 'API Key:',
+        'aiModelLabel': 'Model:',
+        'loadModelsBtn': '🔄 Load Model List',
+        'switchToChinese': '切換到中文',
+        'languageSwitched': 'Language switched',
+        'errorNotLinkedInPage': 'Please use this feature on a LinkedIn job page',
+        'errorIncompleteNotionConfig': 'Please complete the Notion configuration',
+        'statusConfigSaved': 'Configuration saved!',
+        'statusScrapingJob': 'Scraping job data...',
+        'statusAnalyzingWithAI': 'Analyzing job data with AI...',
+        'statusUploadingToNotion': 'Job data scraped successfully, uploading to Notion...',
+        'statusJobSavedWithAI': '✅ Job successfully analyzed and saved to Notion!',
+        'statusJobSaved': '✅ Job successfully saved to Notion!',
+        'errorUploadToNotion': '❌ Failed to upload to Notion: ',
+        'statusCreatingDatabase': 'Creating Notion database...',
+        'successDatabaseCreated': '✅ Database created successfully! Database ID has been automatically filled in.',
+        'errorCreateDatabase': '❌ Failed to create database: ',
+        'statusDebugComplete': '✅ Debug completed, check Console',
+        'statusDebugFailed': '❌ Debug failed',
+        'statusDebugError': '❌ Debug error: '
+      }
+    };
+    
+    return messages[language]?.[key] || chrome.i18n.getMessage(key) || key;
+  }
+
+  // 語言切換
+  async toggleLanguage() {
+    const newLanguage = this.currentLanguage === 'zh_TW' ? 'en' : 'zh_TW';
+    this.currentLanguage = newLanguage;
+    
+    // 儲存語言偏好設定
+    await chrome.storage.sync.set({ preferredLanguage: newLanguage });
+    
+    // 重新初始化 i18n
+    this.initializeI18n();
+    
+    // 顯示切換成功訊息
+    this.showStatus(this.getMessage('languageSwitched'), 'success');
+  }
+
+  // 更新語言切換按鈕的提示文字
+  updateLanguageToggleTooltip() {
+    const toggleBtn = document.getElementById('languageToggle');
+    if (toggleBtn) {
+      const tooltipKey = this.currentLanguage === 'zh_TW' ? 'switchToEnglish' : 'switchToChinese';
+      toggleBtn.title = this.getMessage(tooltipKey);
+    }
   }
 
   async saveConfig() {
@@ -93,7 +246,7 @@ class LinkedInJobExtension {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       
       if (!this.isLinkedInJobPage(tab.url)) {
-        this.showStatus('請在 LinkedIn 職缺頁面使用此功能', 'error');
+        this.showStatus(this.getMessage('errorNotLinkedInPage'), 'error');
         return;
       }
 
@@ -126,7 +279,7 @@ class LinkedInJobExtension {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       
       if (!this.isLinkedInJobPage(tab.url)) {
-        this.showStatus('請在 LinkedIn 職缺頁面使用此功能', 'error');
+        this.showStatus(this.getMessage('errorNotLinkedInPage'), 'error');
         return;
       }
 
@@ -183,7 +336,7 @@ class LinkedInJobExtension {
       this.showStatus(successMessage, 'success');
 
     } catch (error) {
-      this.showStatus('❌ 操作失敗: ' + error.message, 'error');
+      this.showStatus(this.getMessage('errorUploadToNotion') + error.message, 'error');
     } finally {
       document.getElementById('scrapeBtn').disabled = false;
     }
@@ -570,7 +723,7 @@ class LinkedInJobExtension {
       <strong>薪資:</strong> ${data.salary}<br>
       <strong>類型:</strong> ${data.jobType}<br>
       <strong>經驗:</strong> ${data.experience}<br>
-      <strong>描述:</strong> ${data.description.substring(0, 200)}...
+      <strong>描述:</strong> ${(data.description || 'No description available').substring(0, 200)}...
     `;
   }
 
@@ -585,7 +738,7 @@ class LinkedInJobExtension {
 
     try {
       document.getElementById('createDbBtn').disabled = true;
-      this.showStatus('正在建立 Notion 資料庫...', '');
+      this.showStatus(this.getMessage('statusCreatingDatabase'), '');
 
       // 首先獲取 workspace 中的頁面
       const pagesResponse = await fetch('https://api.notion.com/v1/search', {
@@ -743,7 +896,7 @@ class LinkedInJobExtension {
       this.showStatus('✅ 資料庫建立成功！已自動填入 Database ID', 'success');
 
     } catch (error) {
-      this.showStatus('❌ 建立失敗: ' + error.message, 'error');
+      this.showStatus(this.getMessage('errorCreateDatabase') + error.message, 'error');
     } finally {
       document.getElementById('createDbBtn').disabled = false;
     }
@@ -887,6 +1040,46 @@ class LinkedInJobExtension {
   }
 
   // 調試頁面元素
+  // 檢查是否為開發模式
+  isDevelopmentMode() {
+    // 方式1: 檢查擴充功能是否未打包 (開發模式)
+    return !chrome.runtime.getManifest().update_url;
+    
+    // 方式2: 也可以用環境變數或特殊標記
+    // return localStorage.getItem('debug_mode') === 'true';
+    
+    // 方式3: 檢查是否在 localhost 或開發環境
+    // return window.location.hostname === 'localhost' || window.location.hostname.includes('dev');
+  }
+
+  addDebugButton() {
+    // 只在開發模式下顯示調試按鈕
+    if (!this.isDevelopmentMode()) {
+      console.log('🔒 Production mode: Debug button hidden');
+      return;
+    }
+
+    console.log('🛠️ Development mode: Adding debug button');
+    
+    const debugBtn = document.createElement('button');
+    debugBtn.textContent = this.getMessage('debugBtn') || '🔍 調試頁面元素';
+    debugBtn.className = 'btn';
+    debugBtn.style.background = '#059669';
+    debugBtn.style.fontSize = '12px';
+    debugBtn.style.padding = '8px';
+    debugBtn.style.marginBottom = '10px';
+    debugBtn.addEventListener('click', () => this.debugPageElements());
+    
+    // 在分隔線之前插入
+    const divider = document.querySelector('.divider');
+    if (divider && divider.parentNode) {
+      divider.parentNode.insertBefore(debugBtn, divider);
+    } else {
+      // 備用：加到最後
+      document.body.appendChild(debugBtn);
+    }
+  }
+
   async debugPageElements() {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -895,12 +1088,12 @@ class LinkedInJobExtension {
       const response = await this.sendMessageWithRetry(tab.id, { action: 'debug' });
       
       if (response && response.success) {
-        this.showStatus('✅ 調試完成，請查看 Console', 'success');
+        this.showStatus(this.getMessage('statusDebugComplete'), 'success');
       } else {
-        this.showStatus('❌ 調試失敗', 'error');
+        this.showStatus(this.getMessage('statusDebugFailed'), 'error');
       }
     } catch (error) {
-      this.showStatus('❌ 調試錯誤: ' + error.message, 'error');
+      this.showStatus(this.getMessage('statusDebugError') + error.message, 'error');
     }
   }
 
@@ -990,7 +1183,7 @@ class LinkedInJobExtension {
     // 儲存新的提供商選擇
     await chrome.storage.sync.set({ aiProvider: newProvider });
     
-    this.showStatus(`已切換到 ${this.getProviderDisplayName(newProvider)}`, 'success');
+    this.showStatus(this.getMessage('statusProviderSwitched') + ` ${this.getProviderDisplayName(newProvider)}`, 'success');
   }
 
   // 儲存當前提供商的配置
@@ -1026,7 +1219,7 @@ class LinkedInJobExtension {
 
     try {
       document.getElementById('loadModels').disabled = true;
-      this.showStatus('正在載入模型列表...', '');
+      this.showStatus(this.getMessage('statusLoadingModels'), '');
 
       let models = [];
       
@@ -1293,9 +1486,9 @@ Please ensure the output is valid JSON format without any other text.
     await chrome.storage.sync.set({ enableAI: this.enableAI });
     
     if (this.enableAI) {
-      this.showStatus('✅ AI 分析已啟用', 'success');
+      this.showStatus(this.getMessage('statusAiEnabled'), 'success');
     } else {
-      this.showStatus('ℹ️ AI 分析已停用，將直接使用原始資料', '');
+      this.showStatus(this.getMessage('statusAiDisabled'), '');
     }
   }
 

@@ -25,6 +25,7 @@
     .header {
       text-align: center;
       margin-bottom: 20px;
+      position: relative;
     }
     
     .logo {
@@ -280,12 +281,40 @@
       opacity: 0.4;
       pointer-events: none;
     }
+    
+    /* 語言切換按鈕樣式 */
+    .language-toggle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      color: #6b7280;
+    }
+    
+    .language-toggle:hover {
+      background-color: #f3f4f6;
+      color: #374151;
+      transform: scale(1.1);
+    }
+    
+    .language-toggle:active {
+      transform: scale(0.95);
+    }
   </style>
 </head>
 <body>
   <div class="header">
     <div class="logo">📋</div>
-    <h3>LinkedIn 職缺抓取器</h3>
+    <h3 data-i18n="headerTitle">LinkedIn 職缺抓取器</h3>
+    <button class="language-toggle" id="languageToggle" title="Switch Language">
+      🌐
+    </button>
   </div>
 
   <!-- AI 啟用開關 -->
@@ -293,15 +322,15 @@
     <label class="checkbox-container">
       <input type="checkbox" id="enableAI" class="ai-checkbox">
       <span class="checkmark"></span>
-      <span class="checkbox-label">🤖 啟用 AI 分析</span>
+      <span class="checkbox-label" data-i18n="aiToggleLabel">🤖 啟用 AI 分析</span>
     </label>
-    <p class="help-text">開啟後將使用 AI 分析職缺並提取結構化資訊</p>
+    <p class="help-text" data-i18n="aiToggleHelp">開啟後將使用 AI 分析職缺並提取結構化資訊</p>
   </div>
 
   <!-- 主要功能按鈕 -->
   <div class="main-actions">
-    <button class="btn" id="scrapeBtn">🚀 抓取職缺</button>
-    <button class="btn btn-secondary" id="previewBtn">👁️ 預覽資料</button>
+    <button class="btn" id="scrapeBtn" data-i18n="scrapeJobBtn">🚀 抓取職缺</button>
+    <button class="btn btn-secondary" id="previewBtn" data-i18n="previewBtn">👁️ 預覽資料</button>
   </div>
 
   <div class="divider"></div>
@@ -309,26 +338,26 @@
   <!-- 可折疊的設定區塊 -->
   <div class="collapsible-section">
     <button class="section-toggle" id="notionToggle">
-      <span>⚙️ Notion 設定</span>
+      <span data-i18n="notionConfigTitle">⚙️ Notion 設定</span>
       <span class="toggle-icon">▼</span>
     </button>
     <div class="config-section collapsible-content" id="notionConfig">
       <div class="input-group">
-        <label>Integration Token:</label>
-        <input type="password" id="notionToken" placeholder="secret_...">
+        <label data-i18n="notionTokenLabel">Integration Token:</label>
+        <input type="password" id="notionToken" data-i18n-placeholder="notionTokenPlaceholder" placeholder="secret_...">
       </div>
       <div class="input-group">
-        <label>Database ID:</label>
-        <input type="text" id="databaseId" placeholder="資料庫 ID">
+        <label data-i18n="databaseIdLabel">Database ID:</label>
+        <input type="text" id="databaseId" data-i18n-placeholder="databaseIdPlaceholder" placeholder="資料庫 ID">
       </div>
-      <button class="btn create-db" id="createDbBtn">🏗️ 自動建立資料庫</button>
-      <button class="btn" id="saveConfig">💾 儲存設定</button>
+      <button class="btn create-db" id="createDbBtn" data-i18n="createDbBtn">🏗️ 自動建立資料庫</button>
+      <button class="btn" id="saveConfig" data-i18n="saveConfigBtn">💾 儲存設定</button>
     </div>
   </div>
 
   <div class="collapsible-section">
     <button class="section-toggle" id="aiToggle">
-      <span>🤖 AI 設定</span>
+      <span data-i18n="aiConfigTitle">🤖 AI 設定</span>
       <span class="toggle-icon">▼</span>
     </button>
     <div class="config-section collapsible-content" id="aiConfig">
@@ -337,7 +366,7 @@
       <!-- AI 配置區域 -->
       <div class="ai-config-area" id="aiConfigArea">
       <div class="form-group">
-        <label for="aiProvider">AI 平台：</label>
+        <label for="aiProvider" data-i18n="aiProviderLabel">AI 平台：</label>
         <select id="aiProvider" class="form-control">
           <option value="openai">OpenAI</option>
           <option value="openrouter">OpenRouter</option>
@@ -349,19 +378,19 @@
       </div>
       
       <div class="form-group">
-        <label for="aiApiKey">API Key：</label>
-        <input type="password" id="aiApiKey" class="form-control" placeholder="輸入 AI API Key">
+        <label for="aiApiKey" data-i18n="aiApiKeyLabel">API Key：</label>
+        <input type="password" id="aiApiKey" class="form-control" data-i18n-placeholder="aiApiKeyPlaceholder" placeholder="輸入 AI API Key">
       </div>
       
       <div class="form-group">
-        <label for="aiModel">模型：</label>
+        <label for="aiModel" data-i18n="aiModelLabel">模型：</label>
         <select id="aiModel" class="form-control">
-          <option value="">選擇模型...</option>
+          <option value="" data-i18n="aiModelPlaceholder">選擇模型...</option>
         </select>
-        <button id="loadModels" class="btn btn-small btn-secondary" style="margin-top: 5px;">🔄 載入模型列表</button>
+        <button id="loadModels" class="btn btn-small btn-secondary" style="margin-top: 5px;" data-i18n="loadModelsBtn">🔄 載入模型列表</button>
       </div>
       
-      <button id="saveAiConfig" class="btn btn-secondary">💾 儲存 AI 設定</button>
+      <button id="saveAiConfig" class="btn btn-secondary" data-i18n="saveAiConfigBtn">💾 儲存 AI 設定</button>
       </div>
     </div>
   </div>

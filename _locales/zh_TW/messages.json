@@ -1,0 +1,234 @@
+{
+  "extensionName": {
+    "message": "通用職缺抓取器",
+    "description": "Extension name"
+  },
+  "extensionDescription": {
+    "message": "一鍵抓取各大求職網站職缺到 Notion",
+    "description": "Extension description"
+  },
+  "popupTitle": {
+    "message": "抓取職缺到 Notion",
+    "description": "Popup action title"
+  },
+  
+  "headerTitle": {
+    "message": "通用職缺抓取器",
+    "description": "Header title in popup"
+  },
+  
+  "aiToggleLabel": {
+    "message": "🤖 啟用 AI 分析",
+    "description": "AI toggle checkbox label"
+  },
+  "aiToggleHelp": {
+    "message": "開啟後將使用 AI 分析職缺並提取結構化資訊",
+    "description": "AI toggle help text"
+  },
+  
+  "scrapeJobBtn": {
+    "message": "🚀 抓取職缺",
+    "description": "Main scrape button"
+  },
+  "previewBtn": {
+    "message": "👁️ 預覽資料",
+    "description": "Preview button"
+  },
+  "debugBtn": {
+    "message": "🔍 調試頁面元素",
+    "description": "Debug button"
+  },
+  
+  "notionConfigTitle": {
+    "message": "⚙️ Notion 設定",
+    "description": "Notion configuration section title"
+  },
+  "aiConfigTitle": {
+    "message": "🤖 AI 設定",
+    "description": "AI configuration section title"
+  },
+  
+  "notionTokenLabel": {
+    "message": "Integration Token:",
+    "description": "Notion token input label"
+  },
+  "notionTokenPlaceholder": {
+    "message": "secret_...",
+    "description": "Notion token input placeholder"
+  },
+  "databaseIdLabel": {
+    "message": "Database ID:",
+    "description": "Database ID input label"
+  },
+  "databaseIdPlaceholder": {
+    "message": "資料庫 ID",
+    "description": "Database ID input placeholder"
+  },
+  
+  "createDbBtn": {
+    "message": "🏗️ 自動建立資料庫",
+    "description": "Create database button"
+  },
+  "saveConfigBtn": {
+    "message": "💾 儲存設定",
+    "description": "Save configuration button"
+  },
+  "saveAiConfigBtn": {
+    "message": "💾 儲存 AI 設定",
+    "description": "Save AI configuration button"
+  },
+  
+  "aiProviderLabel": {
+    "message": "AI 平台：",
+    "description": "AI provider select label"
+  },
+  "aiApiKeyLabel": {
+    "message": "API Key：",
+    "description": "AI API key input label"
+  },
+  "aiApiKeyPlaceholder": {
+    "message": "輸入 AI API Key",
+    "description": "AI API key input placeholder"
+  },
+  "aiModelLabel": {
+    "message": "模型：",
+    "description": "AI model select label"
+  },
+  "aiModelPlaceholder": {
+    "message": "選擇模型...",
+    "description": "AI model select placeholder"
+  },
+  "loadModelsBtn": {
+    "message": "🔄 載入模型列表",
+    "description": "Load models button"
+  },
+  
+  "statusConfigSaved": {
+    "message": "設定已儲存！",
+    "description": "Configuration saved status message"
+  },
+  "statusAiConfigSaved": {
+    "message": "AI 設定已儲存！",
+    "description": "AI configuration saved status message"
+  },
+  "statusScrapingJob": {
+    "message": "正在抓取職缺資料...",
+    "description": "Status message when scraping job"
+  },
+  "statusAnalyzingWithAI": {
+    "message": "正在使用 AI 分析職缺資料...",
+    "description": "Status message when analyzing with AI"
+  },
+  "statusUploadingToNotion": {
+    "message": "資料抓取成功，正在上傳到 Notion...",
+    "description": "Status message when uploading to Notion"
+  },
+  "statusAiEnabledButNotConfigured": {
+    "message": "AI 已啟用但未完成設定，使用原始資料上傳...",
+    "description": "Status message when AI enabled but not configured"
+  },
+  "statusJobSavedWithAI": {
+    "message": "✅ 職缺已成功分析並儲存到 Notion！",
+    "description": "Success message when job saved with AI analysis"
+  },
+  "statusJobSavedWithoutAI": {
+    "message": "✅ 職缺已儲存到 Notion（未使用 AI 分析）",
+    "description": "Success message when job saved without AI"
+  },
+  "statusJobSaved": {
+    "message": "✅ 職缺已成功儲存到 Notion！",
+    "description": "Success message when job saved"
+  },
+  
+  "errorNotJobPage": {
+    "message": "請在支援的求職網站職缺頁面使用此功能",
+    "description": "Error when not on a supported job page"
+  },
+  "errorIncompleteNotionConfig": {
+    "message": "請填入完整的 Notion 設定",
+    "description": "Error when Notion configuration is incomplete"
+  },
+  "errorIncompleteAiConfig": {
+    "message": "請先設定 AI API Key 和選擇模型",
+    "description": "Error when AI configuration is incomplete"
+  },
+  "errorLoadingModels": {
+    "message": "載入模型失敗：",
+    "description": "Error when loading AI models fails"
+  },
+  "errorScraping": {
+    "message": "抓取失敗：",
+    "description": "Error when scraping fails"
+  },
+  "errorAiAnalysis": {
+    "message": "AI 分析失敗，將使用原始資料：",
+    "description": "Error when AI analysis fails"
+  },
+  "errorUploadToNotion": {
+    "message": "上傳到 Notion 失敗：",
+    "description": "Error when uploading to Notion fails"
+  },
+  "errorCreateDatabase": {
+    "message": "建立資料庫失敗：",
+    "description": "Error when creating database fails"
+  },
+  
+  "successDatabaseCreated": {
+    "message": "✅ 資料庫建立成功！Database ID 已自動填入。",
+    "description": "Success message when database is created"
+  },
+  "modelsLoaded": {
+    "message": "模型載入成功",
+    "description": "Success message when models are loaded"
+  },
+  
+  "statusCreatingDatabase": {
+    "message": "正在建立 Notion 資料庫...",
+    "description": "Status when creating database"
+  },
+  "statusDebugComplete": {
+    "message": "✅ 調試完成，請查看 Console",
+    "description": "Debug completion message"
+  },
+  "statusDebugFailed": {
+    "message": "❌ 調試失敗",
+    "description": "Debug failed message"
+  },
+  "statusDebugError": {
+    "message": "❌ 調試錯誤：",
+    "description": "Debug error message"
+  },
+  "statusProviderSwitched": {
+    "message": "已切換到",
+    "description": "Provider switched message"
+  },
+  "statusLoadingModels": {
+    "message": "正在載入模型列表...",
+    "description": "Loading models status"
+  },
+  "statusAiEnabled": {
+    "message": "✅ AI 分析已啟用",
+    "description": "AI enabled status"
+  },
+  "statusAiDisabled": {
+    "message": "ℹ️ AI 分析已停用，將直接使用原始資料",
+    "description": "AI disabled status"
+  },
+  
+  "languageToggle": {
+    "message": "🌐",
+    "description": "Language toggle button"
+  },
+  "switchToEnglish": {
+    "message": "Switch to English",
+    "description": "Switch to English tooltip"
+  },
+  "switchToChinese": {
+    "message": "切換到中文",
+    "description": "Switch to Chinese tooltip"
+  },
+  "languageSwitched": {
+    "message": "語言已切換",
+    "description": "Language switched confirmation"
+  }
+}

@@ -1,96 +1,234 @@
 // LinkedIn Job Content Scraper
-console.log('LinkedIn Job Scraper content script loaded');
+console.log('Universal Job Scraper content script loaded');
 
-class LinkedInJobScraper {
-  constructor() {
+// 網站檢測器
+class SiteDetector {
+  static getCurrentSite() {
+    const hostname = window.location.hostname;
+    
+    if (hostname.includes('linkedin.com')) return 'linkedin';
+    if (hostname.includes('104.com.tw')) return '104';
+    if (hostname.includes('1111.com.tw')) return '1111';
+    if (hostname.includes('yourator.co')) return 'yourator';
+    if (hostname.includes('cakeresume.com')) return 'cakeresume';
+    
+    return 'unknown';
+  }
+  
+  static isJobPage(site = null) {
+    const currentSite = site || this.getCurrentSite();
+    const url = window.location.href;
+    const pathname = window.location.pathname;
+    
+    const patterns = {
+      linkedin: /\/jobs\/(view\/\d+|search\/.*currentJobId=\d+)/,
+      104: /\/job\//,
+      1111: /\/job\//,
+      yourator: /\/jobs\/\w+/,
+      cakeresume: /\/jobs\//
+    };
+    
+    const isMatch = patterns[currentSite]?.test(url) || patterns[currentSite]?.test(pathname);
+    console.log(`🔍 Site: ${currentSite}, URL: ${url}, Is Job Page: ${isMatch}`);
+    
+    return isMatch || false;
+  }
+  
+  static getSiteConfig(site = null) {
+    const currentSite = site || this.getCurrentSite();
+    
+    const configs = {
+      linkedin: {
+        name: 'LinkedIn',
+        buttonText: '📋 Scrape to Notion',
+        selectors: {
+          // 現有的 LinkedIn 選擇器將在重構時移到這裡
+        }
+      },
+      104: {
+        name: '104人力銀行',
+        buttonText: '📋 抓取到 Notion',
+        selectors: {
+          title: '.job-header h1',
+          company: '.company-name',
+          description: '.job-description'
+        }
+      },
+      1111: {
+        name: '1111人力銀行',
+        buttonText: '📋 抓取到 Notion',
+        selectors: {
+          title: '.job-title',
+          company: '.company-name',
+          description: '.job-content'
+        }
+      },
+      yourator: {
+        name: 'Yourator',
+        buttonText: '📋 Scrape to Notion',
+        selectors: {
+          title: '.job-title',
+          company: '.company-name',
+          description: '.job-description'
+        }
+      },
+      cakeresume: {
+        name: 'CakeResume',
+        buttonText: '📋 Scrape to Notion',
+        selectors: {
+          title: '.job-title',
+          company: '.company-name',
+          description: '.job-description'
+        }
+      }
+    };
+    
+    return configs[currentSite] || null;
+  }
+}
+
+// 基礎職缺抓取器抽象類別
+class BaseJobScraper {
+  constructor(site) {
+    this.site = site;
+    this.siteConfig = SiteDetector.getSiteConfig(site);
     this.jobData = {};
   }
 
-  // Main scraping method
-  scrapeJobDetails() {
-    console.log('Starting job details scraping...');
+  // 抽象方法 - 子類別必須實作
+  async scrapeJob() {
+    throw new Error('scrapeJob() method must be implemented');
+  }
+
+  getJobTitle() {
+    throw new Error('getJobTitle() method must be implemented');
+  }
+
+  getCompany() {
+    throw new Error('getCompany() method must be implemented');
+  }
+
+  getLocation() {
+    throw new Error('getLocation() method must be implemented');
+  }
+
+  getDescription() {
+    throw new Error('getDescription() method must be implemented');
+  }
+
+  getSalary() {
+    return 'Unknown'; // 預設實作
+  }
+
+  getJobType() {
+    return 'Unknown'; // 預設實作
+  }
+
+  getExperience() {
+    return 'Unknown'; // 預設實作
+  }
+
+  getPostedDate() {
+    return 'Unknown'; // 預設實作
+  }
+
+  getRequirements() {
+    return ''; // 預設實作
+  }
+
+  getBenefits() {
+    return ''; // 預設實作
+  }
+
+  // 通用輔助方法
+  extractTextContent(selector) {
+    const element = document.querySelector(selector);
+    return element?.textContent?.trim() || '';
+  }
+
+  extractAllTextContent(selector) {
+    const elements = document.querySelectorAll(selector);
+    return Array.from(elements).map(el => el.textContent?.trim()).filter(text => text);
+  }
+
+  cleanText(text) {
+    return text?.replace(/\s+/g, ' ').trim() || '';
+  }
+
+  // 通用職缺資料結構
+  createJobData() {
+    return {
+      site: this.site,
+      siteName: this.siteConfig?.name || this.site,
+      title: this.getJobTitle(),
+      company: this.getCompany(),
+      location: this.getLocation(),
+      salary: this.getSalary(),
+      description: this.getDescription(),
+      requirements: this.getRequirements(),
+      benefits: this.getBenefits(),
+      jobType: this.getJobType(),
+      experience: this.getExperience(),
+      postedDate: this.getPostedDate(),
+      url: window.location.href,
+      scrapedAt: new Date().toISOString()
+    };
+  }
+}
+
+// LinkedIn 特定實作
+class LinkedInJobScraper extends BaseJobScraper {
+  constructor() {
+    super('linkedin');
+  }
+
+  // 實作基礎類別的抽象方法
+  async scrapeJob() {
+    console.log('🔍 LinkedIn: Starting job scraping...');
     
     try {
-      // 首先檢查 jobs-description__container 是否存在
+      // 檢查描述容器是否存在
       const descContainer = document.querySelector('article .jobs-description__container');
-      console.log('Description container found:', !!descContainer);
+      console.log('📄 Description container found:', !!descContainer);
       
       const rawDescription = this.getDescription();
-      console.log('Raw description length:', rawDescription?.length || 0);
+      console.log('📝 Raw description length:', rawDescription?.length || 0);
       
-      this.jobData = {
-        title: this.getJobTitle(),
-        company: this.getCompany(),
-        location: this.getLocation(),
-        salary: this.getSalary(),
-        description: rawDescription,
-        requirements: this.getRequirements(),
-        benefits: this.getBenefits(),
-        jobType: this.getJobType(),
-        experience: this.getExperience(),
-        postedDate: this.getPostedDate(),
-        url: window.location.href,
-        scrapedAt: new Date().toISOString(),
-        // 新增：原始資料用於 AI 分析
-        rawData: {
-          fullDescription: rawDescription,
-          htmlContent: this.getRawHTML(),
-          pageTitle: document.title,
-          metaInfo: this.getMetaInfo(),
-          descriptionInfo: this.extractInfoFromDescription()
-        }
+      this.jobData = this.createJobData();
+      
+      // 新增原始資料用於 AI 分析
+      this.jobData.rawData = {
+        fullDescription: rawDescription,
+        htmlContent: this.getRawHTML(),
+        pageTitle: document.title,
+        metaInfo: this.getMetaInfo(),
+        descriptionInfo: this.extractInfoFromDescription()
       };
 
-      console.log('Successfully scraped job data:', this.jobData);
+      console.log('✅ LinkedIn job data scraped:', this.jobData);
       
-      // 檢查必要欄位是否為空
+      // 檢查必要欄位
       const requiredFields = ['title', 'company'];
       const missingFields = requiredFields.filter(field => 
         !this.jobData[field] || this.jobData[field] === 'Unknown' || this.jobData[field].includes('Unknown')
       );
       
       if (missingFields.length > 0) {
-        console.warn('Missing or unknown data for fields:', missingFields);
-        console.log('Attempting fallback extraction...');
-        
-        // 嘗試從頁面標題提取資訊
-        const titleInfo = this.extractFromPageTitle();
-        if (titleInfo.title && (!this.jobData.title || this.jobData.title.includes('Unknown'))) {
-          this.jobData.title = titleInfo.title;
-          console.log('Updated title from page title:', titleInfo.title);
-        }
-        if (titleInfo.company && (!this.jobData.company || this.jobData.company.includes('Unknown'))) {
-          this.jobData.company = titleInfo.company;
-          console.log('Updated company from page title:', titleInfo.company);
-        }
+        console.warn('⚠️ Missing required fields:', missingFields);
+        return null;
       }
       
       return this.jobData;
-    } catch (error) {
-      console.error('Critical scraping error:', error);
-      console.error('Stack trace:', error.stack);
       
-      // 返回基本的錯誤安全版本
-      return {
-        title: document.title.split('|')[0]?.trim() || 'Unknown Position',
-        company: 'Unknown Company',
-        location: 'Unknown Location',
-        salary: 'Not provided',
-        description: 'Unable to extract job description',
-        requirements: 'Please check the original posting',
-        benefits: 'Please check the original posting',
-        jobType: 'Unknown',
-        experience: 'Unknown',
-        postedDate: 'Unknown',
-        url: window.location.href,
-        scrapedAt: new Date().toISOString(),
-        error: error.message,
-        rawData: {
-          pageTitle: document.title,
-          error: 'Extraction failed'
-        }
-      };
+    } catch (error) {
+      console.error('❌ LinkedIn scraping failed:', error);
+      return null;
     }
+  }
+
+  // 保留原有的主要抓取方法作為兼容性
+  scrapeJobDetails() {
+    return this.scrapeJob();
   }
 
   // 從頁面標題提取資訊
@@ -258,7 +396,7 @@ class LinkedInJobScraper {
       // 最後嘗試從描述文本中找到辦公室位置
       if (!location) {
         const description = this.getDescription();
-        const officeMatch = description.match(/(?:from our|office in|located in|based in)\s*([^,\n.]{2,30})/i);
+        const officeMatch = description?.match(/(?:from our|office in|located in|based in)\s*([^,\n.]{2,30})/i);
         if (officeMatch) {
           location = officeMatch[1].trim();
         }
@@ -327,7 +465,7 @@ class LinkedInJobScraper {
       // 從工作描述中搜索薪資信息
       const description = this.getDescription();
       const salaryPattern = /(?:salary|compensation|pay)\s*:?\s*([\$€£¥]?[\d,]+(?:\s*-\s*[\$€£¥]?[\d,]+)?[\s\w]*)/i;
-      const salaryMatch = description.match(salaryPattern);
+      const salaryMatch = description?.match(salaryPattern);
       
       if (salaryMatch) {
         console.log('✅ Found salary in description:', salaryMatch[1]);
@@ -569,8 +707,8 @@ class LinkedInJobScraper {
           // 最終去除首尾空格
           .trim();
         
-        console.log(`✅ Extracted description (${cleanedText.length} chars):`, cleanedText.substring(0, 200) + '...');
-        console.log('🔍 First 500 chars with line breaks visible:', JSON.stringify(cleanedText.substring(0, 500)));
+        console.log(`✅ Extracted description (${cleanedText?.length || 0} chars):`, cleanedText?.substring(0, 200) + '...' || 'No content');
+        console.log('🔍 First 500 chars with line breaks visible:', JSON.stringify(cleanedText?.substring(0, 500) || 'No content'));
         return cleanedText;
       }
       
@@ -584,10 +722,13 @@ class LinkedInJobScraper {
 
   getRequirements() {
     const description = this.getDescription();
-    console.log("getRequirements - description preview:", description.substring(0, 200));
+    console.log("getRequirements - description preview:", description?.substring(0, 200) || 'No description available');
     
     // 更新的正則表達式，支援新格式
     const reqPatterns = [
+      // Emoji 格式：✅ Who Are You? 或 ✅ Requirements
+      /✅\s*(Who\s+Are\s+You\?|Requirements?|Qualifications?|What\s+we\s+need|What\s+we're\s+looking\s+for)[\s\n]+(.*?)(?=\n\n✅|\n\n🌍|\n\n💰|\n\n📩|$)/is,
+      
       // 粗體格式：**Requirements**
       /\*\*(Requirements?|Qualifications?|What we need|What we're looking for)\*\*[\s\n]+(.*?)(?=\n\n\*\*|\n\n[A-Z]|\nBenefits|\nWHAT|\nWHY|\nABOUT|$)/is,
       
@@ -601,6 +742,12 @@ class LinkedInJobScraper {
       /(?:\*\*)?(職位要求|工作要求|申請條件|必備技能|工作經驗|資格要求)(?:\*\*)?:?[\s\n]+(.*?)(?=\n\n|福利|待遇|$)/is
     ];
     
+    // 確保 description 不是 undefined 或 null
+    if (!description) {
+      console.log('❌ Description is undefined, cannot extract requirements');
+      return '';
+    }
+    
     for (let i = 0; i < reqPatterns.length; i++) {
       const pattern = reqPatterns[i];
       try {
@@ -609,8 +756,8 @@ class LinkedInJobScraper {
         if (match) {
           console.log('✅ Requirements regex matched:', {
             patternIndex: i + 1,
-            fullMatch: match[0].substring(0, 150) + '...',
-            extracted: match[2] ? match[2].substring(0, 150) + '...' : (match[1] ? match[1].substring(0, 150) + '...' : 'No capture group')
+            fullMatch: match[0]?.substring(0, 150) + '...' || 'No match',
+            extracted: match[2] ? match[2]?.substring(0, 150) + '...' : (match[1] ? match[1]?.substring(0, 150) + '...' : 'No capture group')
           });
           
           // 根據不同的正則表達式，提取內容的位置可能不同
@@ -618,7 +765,7 @@ class LinkedInJobScraper {
           if (extractedContent) {
             const req = extractedContent.trim();
             if (req.length > 20) { 
-              console.log('🎯 Found requirements content:', req.substring(0, 100) + '...');
+              console.log('🎯 Found requirements content:', req?.substring(0, 100) + '...' || 'No content');
               return req;
             }
           }
@@ -635,10 +782,13 @@ class LinkedInJobScraper {
 
   getBenefits() {
     const description = this.getDescription();
-    console.log("getBenefits - description preview:", description.substring(0, 200));
+    console.log("getBenefits - description preview:", description?.substring(0, 200) || 'No description available');
     
     // 更新的正則表達式，支援新格式
     const benefitPatterns = [
+      // Emoji 格式：🌍 Work Setup 或其他工作安排相關
+      /🌍\s*(Work\s+Setup|Benefits?|What\s+we\s+offer|Perks?)[\s\n]+(.*?)(?=\n\n🚀|\n\n📩|\n\n✅|\n\n💻|$)/is,
+      
       // 粗體格式：**Benefits**
       /\*\*(Benefits?|What we offer|Perks?|Compensation|Package|Compensation and Benefits)\*\*[\s\n]+(.*?)(?=\n\n\*\*|\n\n[A-Z]|\nRequirements|\nWHAT|\nWHY|\nABOUT|$)/is,
       
@@ -652,6 +802,12 @@ class LinkedInJobScraper {
       /(?:\*\*)?(福利|待遇|薪資福利|員工福利|我們提供|薪酬福利)(?:\*\*)?:?[\s\n]+(.*?)(?=\n\n|職位要求|工作要求|$)/is
     ];
     
+    // 確保 description 不是 undefined 或 null
+    if (!description) {
+      console.log('❌ Description is undefined, cannot extract benefits');
+      return '';
+    }
+    
     for (let i = 0; i < benefitPatterns.length; i++) {
       const pattern = benefitPatterns[i];
       try {
@@ -660,8 +816,8 @@ class LinkedInJobScraper {
         if (match) {
           console.log('✅ Benefits regex matched:', {
             patternIndex: i + 1,
-            fullMatch: match[0].substring(0, 150) + '...',
-            extracted: match[2] ? match[2].substring(0, 150) + '...' : (match[1] ? match[1].substring(0, 150) + '...' : 'No capture group')
+            fullMatch: match[0]?.substring(0, 150) + '...' || 'No match',
+            extracted: match[2] ? match[2]?.substring(0, 150) + '...' : (match[1] ? match[1]?.substring(0, 150) + '...' : 'No capture group')
           });
           
           // 根據不同的正則表達式，提取內容的位置可能不同
@@ -669,7 +825,7 @@ class LinkedInJobScraper {
           if (extractedContent) {
             const benefits = extractedContent.trim();
             if (benefits.length > 20) { 
-              console.log('🎯 Found benefits content:', benefits.substring(0, 100) + '...');
+              console.log('🎯 Found benefits content:', benefits?.substring(0, 100) + '...' || 'No content');
               return benefits;
             }
           }
@@ -688,6 +844,11 @@ class LinkedInJobScraper {
   extractStructuredInfo(description, type) {
     // 這裡可以未來整合 AI 分析
     // 目前先用基礎的關鍵字提取
+    if (!description) {
+      console.log('❌ Description is undefined, cannot extract structured info');
+      return '';
+    }
+    
     const lines = description.split('\n').filter(line => line.trim().length > 5);
     
     const keywords = {
@@ -729,7 +890,22 @@ class LinkedInJobScraper {
         if (text?.includes('full-time') || text?.includes('part-time') || 
             text?.includes('contract') || text?.includes('remote') ||
             text?.includes('全職') || text?.includes('兼職')) {
-          const jobType = element.textContent.trim();
+          
+          // 清理文字，移除多餘的空白和換行
+          let jobType = element.textContent.trim()
+            .replace(/\s+/g, ' ')  // 多個空白合併成一個
+            .replace(/\n+/g, ' ')  // 換行替換成空白
+            .split(/[。\.]/)[0];   // 取第一句話（在句號前停止）
+          
+          // 進一步清理，只保留主要的工作類型資訊
+          if (jobType.length > 50) {
+            // 如果太長，嘗試提取關鍵字
+            if (text.includes('full-time') || text.includes('全職')) jobType = 'Full-time';
+            else if (text.includes('part-time') || text.includes('兼職')) jobType = 'Part-time';
+            else if (text.includes('contract')) jobType = 'Contract';
+            else if (text.includes('remote') || text.includes('遠距')) jobType = 'Remote';
+          }
+          
           console.log('✅ Found job type:', jobType);
           return jobType;
         }
@@ -737,16 +913,18 @@ class LinkedInJobScraper {
       
       // 從描述中查找工作類型
       const description = this.getDescription();
-      const typePatterns = [
-        /(?:this\s+(?:is\s+a\s+)?|position\s+is\s+)?(full[\s-]?time|part[\s-]?time|contract|remote|hybrid)/i,
-        /(全職|兼職|合約|遠程|混合)/i
-      ];
-      
-      for (const pattern of typePatterns) {
-        const match = description.match(pattern);
-        if (match) {
-          console.log('✅ Found job type in description:', match[1]);
-          return match[1];
+      if (description) {
+        const typePatterns = [
+          /(?:this\s+(?:is\s+a\s+)?|position\s+is\s+)?(full[\s-]?time|part[\s-]?time|contract|remote|hybrid)/i,
+          /(全職|兼職|合約|遠程|混合)/i
+        ];
+        
+        for (const pattern of typePatterns) {
+          const match = description.match(pattern);
+          if (match) {
+            console.log('✅ Found job type in description:', match[1]);
+            return match[1];
+          }
         }
       }
       
@@ -760,6 +938,10 @@ class LinkedInJobScraper {
 
   getExperience() {
     const description = this.getDescription();
+    if (!description) {
+      return 'Not specified';
+    }
+    
     const expPatterns = [
       /(\d+)\+?\s*years?\s*of\s*experience/i,
       /(\d+)\+?\s*years?\s*experience/i,
@@ -930,7 +1112,11 @@ class LinkedInJobScraper {
     // 排除不是薪資的文字
     if (lowerText.includes('full-time') || lowerText.includes('part-time') || 
         lowerText.includes('contract') || lowerText.includes('remote') ||
-        lowerText.includes('全職') || lowerText.includes('兼職')) {
+        lowerText.includes('全職') || lowerText.includes('兼職') ||
+        lowerText.includes('premium') || lowerText.includes('試用') ||
+        lowerText.includes('排名') || lowerText.includes('價格') ||
+        lowerText.includes('應徵') || lowerText.includes('好奇') ||
+        text.length > 100) {  // 薪資文字通常不會太長
       return false;
     }
     
@@ -961,62 +1147,323 @@ function debugPageElements() {
   // 檢查描述容器
   console.log('\n📄 Description Containers:');
   document.querySelectorAll('[class*="description"], [class*="job-details"], article').forEach((el, i) => {
-    console.log(`${i + 1}. ${el.tagName}.${el.className}: ${el.textContent?.trim().substring(0, 50)}...`);
+    console.log(`${i + 1}. ${el.tagName}.${el.className}: ${el.textContent?.trim()?.substring(0, 50) || 'No content'}...`);
   });
 }
 
-// Listen for messages from popup
-chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
-  console.log('Content script received message:', request);
-  
-  if (request.action === 'ping') {
-    console.log('Ping received, responding...');
-    sendResponse({ success: true, message: 'Content script loaded', url: window.location.href });
-  } else if (request.action === 'debug') {
-    debugPageElements();
-    sendResponse({ success: true, message: 'Debug completed' });
-  } else if (request.action === 'scrapeJob') {
-    console.log('Scrape job request received');
+
+// 拖動處理器類別
+class DragHandler {
+  constructor(element) {
+    this.element = element;
+    this.isDragging = false;
+    this.hasMovedSignificantly = false;
+    this.startPosition = { x: 0, y: 0 };
+    this.elementStartPosition = { x: 0, y: 0 };
+    this.SNAP_THRESHOLD = 50;
+    this.EDGE_MARGIN = 10;
+    this.MOVE_THRESHOLD = 5; // 超過 5px 才算真正拖動
+    
+    this.bindEvents();
+    this.loadPosition();
+  }
+
+  async loadPosition() {
     try {
-      // 檢查當前頁面是否為職缺相關頁面
-      const url = window.location.href;
-      if (!url.includes('linkedin.com/jobs/')) {
-        throw new Error('Not on a LinkedIn jobs page');
+      const result = await chrome.storage.local.get(['buttonPosition']);
+      const savedPosition = result.buttonPosition;
+      
+      if (savedPosition) {
+        // 確保位置在螢幕範圍內
+        const boundedPosition = this.constrainToViewport(savedPosition.x, savedPosition.y);
+        this.setElementPosition(boundedPosition.x, boundedPosition.y);
       }
-      
-      // 更詳細的頁面類型檢查
-      const isJobDetailPage = url.includes('/jobs/view/');
-      const isJobSearchPage = url.includes('/jobs/search/') || url.includes('/jobs/collections/');
-      
-      if (!isJobDetailPage && !isJobSearchPage) {
-        console.warn('Page type may not be supported:', url);
-      }
-      
-      const scraper = new LinkedInJobScraper();
-      const jobData = scraper.scrapeJobDetails();
-      console.log('Job data scraped:', jobData);
-      sendResponse({ success: true, data: jobData });
     } catch (error) {
-      console.error('Scraping error:', error);
-      sendResponse({ success: false, error: error.message });
+      console.log('Failed to load button position:', error);
+      // 使用預設位置
+      this.setElementPosition(window.innerWidth - this.element.offsetWidth - 20, 20);
     }
   }
-  return true;
-});
 
-// Show scraping button after page loads
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initScraper);
-} else {
-  initScraper();
+  async savePosition(x, y) {
+    try {
+      await chrome.storage.local.set({
+        buttonPosition: { x, y, timestamp: Date.now() }
+      });
+    } catch (error) {
+      console.log('Failed to save button position:', error);
+    }
+  }
+
+  setElementPosition(x, y) {
+    this.element.style.left = x + 'px';
+    this.element.style.top = y + 'px';
+    this.element.style.right = 'auto'; // 清除 right 定位
+  }
+
+  constrainToViewport(x, y) {
+    const rect = this.element.getBoundingClientRect();
+    const maxX = window.innerWidth - rect.width;
+    const maxY = window.innerHeight - rect.height;
+    
+    return {
+      x: Math.max(0, Math.min(x, maxX)),
+      y: Math.max(0, Math.min(y, maxY))
+    };
+  }
+
+  snapToEdge(x, y) {
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    const buttonWidth = this.element.offsetWidth;
+    const buttonHeight = this.element.offsetHeight;
+    
+    // 調試資訊
+    console.log('🧲 Auto-snap to nearest edge:', {
+      position: { x, y },
+      window: { width: windowWidth, height: windowHeight },
+      button: { width: buttonWidth, height: buttonHeight }
+    });
+    
+    // 計算到各個邊緣的距離
+    const distanceToLeft = x;
+    const distanceToRight = windowWidth - (x + buttonWidth);
+    const distanceToTop = y;
+    const distanceToBottom = windowHeight - (y + buttonHeight);
+    
+    console.log('📏 Distances to edges:', {
+      left: distanceToLeft,
+      right: distanceToRight,
+      top: distanceToTop,
+      bottom: distanceToBottom
+    });
+    
+    // 找出最近的水平邊緣（左或右）
+    let finalX, finalY;
+    let snapDirection = '';
+    
+    if (distanceToLeft <= distanceToRight) {
+      // 貼左邊
+      finalX = this.EDGE_MARGIN;
+      snapDirection = 'left';
+      console.log('🧲 Auto-snapping to LEFT edge');
+    } else {
+      // 貼右邊
+      finalX = windowWidth - buttonWidth - this.EDGE_MARGIN;
+      snapDirection = 'right';
+      console.log('🧲 Auto-snapping to RIGHT edge');
+    }
+    
+    // Y 位置保持不變，但確保在螢幕範圍內
+    finalY = Math.max(this.EDGE_MARGIN, Math.min(y, windowHeight - buttonHeight - this.EDGE_MARGIN));
+    
+    console.log(`✅ Final auto-snap position: (${finalX}, ${finalY}) - Direction: ${snapDirection}`);
+    
+    // 總是返回 snapped: true，因為我們總是會自動貼邊
+    return { x: finalX, y: finalY, snapped: true };
+  }
+
+  bindEvents() {
+    // 滑鼠事件
+    this.element.addEventListener('mousedown', this.handleMouseDown.bind(this));
+    document.addEventListener('mousemove', this.handleMouseMove.bind(this));
+    document.addEventListener('mouseup', this.handleMouseUp.bind(this));
+
+    // 觸控事件
+    this.element.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
+    document.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
+    document.addEventListener('touchend', this.handleTouchEnd.bind(this));
+
+    // 視窗大小改變時重新調整位置
+    window.addEventListener('resize', this.handleResize.bind(this));
+  }
+
+  handleMouseDown(e) {
+    e.preventDefault();
+    this.startDrag(e.clientX, e.clientY);
+  }
+
+  handleTouchStart(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    this.startDrag(touch.clientX, touch.clientY);
+  }
+
+  startDrag(clientX, clientY) {
+    this.isDragging = true;
+    this.hasMovedSignificantly = false;
+    
+    this.startPosition = { x: clientX, y: clientY };
+    
+    const rect = this.element.getBoundingClientRect();
+    this.elementStartPosition = { x: rect.left, y: rect.top };
+    
+    console.log('🖱️ Start drag:', {
+      mouse: this.startPosition,
+      element: this.elementStartPosition,
+      buttonSize: { width: rect.width, height: rect.height }
+    });
+    
+    // 拖動時的視覺回饋
+    this.element.style.cursor = 'grabbing';
+    this.element.style.transform = 'scale(1.05)';
+    this.element.style.transition = 'transform 0.1s ease';
+    this.element.style.zIndex = '10000';
+  }
+
+  handleMouseMove(e) {
+    if (!this.isDragging) return;
+    this.updateDrag(e.clientX, e.clientY);
+  }
+
+  handleTouchMove(e) {
+    if (!this.isDragging) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    this.updateDrag(touch.clientX, touch.clientY);
+  }
+
+  updateDrag(clientX, clientY) {
+    const deltaX = clientX - this.startPosition.x;
+    const deltaY = clientY - this.startPosition.y;
+    
+    // 檢查是否移動了足夠距離
+    if (!this.hasMovedSignificantly) {
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      if (distance > this.MOVE_THRESHOLD) {
+        this.hasMovedSignificantly = true;
+      }
+    }
+    
+    const newX = this.elementStartPosition.x + deltaX;
+    const newY = this.elementStartPosition.y + deltaY;
+    
+    const constrainedPosition = this.constrainToViewport(newX, newY);
+    this.setElementPosition(constrainedPosition.x, constrainedPosition.y);
+  }
+
+  handleMouseUp() {
+    if (!this.isDragging) return;
+    this.endDrag();
+  }
+
+  handleTouchEnd() {
+    if (!this.isDragging) return;
+    this.endDrag();
+  }
+
+  endDrag() {
+    this.isDragging = false;
+    console.log('🏁 End drag started');
+    
+    // 獲取當前位置
+    const rect = this.element.getBoundingClientRect();
+    let finalX = rect.left;
+    let finalY = rect.top;
+    
+    console.log('📍 Current position before snap:', { x: finalX, y: finalY });
+    
+    // 磁吸邊緣
+    const snapResult = this.snapToEdge(finalX, finalY);
+    finalX = snapResult.x;
+    finalY = snapResult.y;
+    
+    console.log('📍 Position after snap:', { x: finalX, y: finalY, snapped: snapResult.snapped });
+    
+    // 總是使用動畫過渡到側邊
+    console.log('🎬 Applying auto-snap animation');
+    this.element.style.transition = 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    this.setElementPosition(finalX, finalY);
+    
+    // 動畫完成後移除過渡
+    setTimeout(() => {
+      this.element.style.transition = 'transform 0.1s ease';
+      console.log('🎬 Auto-snap animation completed');
+    }, 200);
+    
+    // 恢復視覺狀態
+    this.element.style.cursor = 'grab';
+    this.element.style.transform = 'scale(1)';
+    this.element.style.zIndex = '9999';
+    
+    // 儲存位置
+    this.savePosition(finalX, finalY);
+  }
+
+  handleResize() {
+    // 視窗大小改變時，確保按鈕仍在可見範圍內
+    const rect = this.element.getBoundingClientRect();
+    const constrainedPosition = this.constrainToViewport(rect.left, rect.top);
+    
+    if (rect.left !== constrainedPosition.x || rect.top !== constrainedPosition.y) {
+      this.setElementPosition(constrainedPosition.x, constrainedPosition.y);
+      this.savePosition(constrainedPosition.x, constrainedPosition.y);
+    }
+  }
 }
 
-function initScraper() {
-  // Add floating scraping button
-  if (!document.getElementById('linkedin-scraper-btn')) {
+// 職缺抓取器工廠類別
+class JobScraperFactory {
+  static createScraper(site = null) {
+    const currentSite = site || SiteDetector.getCurrentSite();
+    
+    switch (currentSite) {
+      case 'linkedin':
+        return new LinkedInJobScraper();
+      case '104':
+        // TODO: 實作 104JobScraper
+        console.log('104 scraper not implemented yet');
+        return null;
+      case '1111':
+        // TODO: 實作 1111JobScraper
+        console.log('1111 scraper not implemented yet');
+        return null;
+      case 'yourator':
+        // TODO: 實作 YouratorJobScraper
+        console.log('Yourator scraper not implemented yet');
+        return null;
+      case 'cakeresume':
+        // TODO: 實作 CakeResumeJobScraper
+        console.log('CakeResume scraper not implemented yet');
+        return null;
+      default:
+        console.warn('Unsupported site:', currentSite);
+        return null;
+    }
+  }
+}
+
+async function initScraper() {
+  // 檢查當前網站
+  const currentSite = SiteDetector.getCurrentSite();
+  console.log('🔍 Current site detected:', currentSite);
+  
+  // 檢查是否為職缺頁面
+  const isJobPage = SiteDetector.isJobPage();
+  console.log('📋 Is job page:', isJobPage, 'URL:', window.location.href);
+  
+  if (!isJobPage) {
+    console.log('ℹ️ Not a job page, scraper not initialized');
+    return;
+  }
+  
+  // 獲取網站配置
+  let siteConfig = SiteDetector.getSiteConfig();
+  if (!siteConfig) {
+    console.warn('⚠️ No site configuration found for:', currentSite);
+    // 使用預設配置
+    siteConfig = {
+      name: 'Unknown Site',
+      buttonText: '📋 Scrape to Notion'
+    };
+    console.log('Using default configuration');
+  }
+  
+  // 新增懸浮抓取按鈕
+  if (!document.getElementById('universal-scraper-btn')) {
     const button = document.createElement('button');
-    button.id = 'linkedin-scraper-btn';
-    button.innerHTML = '📋 Scrape to Notion';
+    button.id = 'universal-scraper-btn';
+    button.innerHTML = siteConfig.buttonText;
     button.style.cssText = `
       position: fixed;
       top: 20px;
@@ -1027,26 +1474,97 @@ function initScraper() {
       border: none;
       padding: 12px 20px;
       border-radius: 8px;
-      cursor: pointer;
+      cursor: grab;
       font-weight: bold;
       box-shadow: 0 4px 12px rgba(0,102,204,0.3);
-      transition: all 0.3s ease;
+      transition: transform 0.1s ease;
+      user-select: none;
     `;
     
+    // 建立拖動處理器
+    const dragHandler = new DragHandler(button);
+    
+    // 懸停效果（僅在非拖動時觸發）
     button.addEventListener('mouseenter', () => {
-      button.style.transform = 'translateY(-2px)';
-      button.style.boxShadow = '0 6px 16px rgba(0,102,204,0.4)';
+      if (!dragHandler.isDragging) {
+        button.style.transform = 'translateY(-2px)';
+        button.style.boxShadow = '0 6px 16px rgba(0,102,204,0.4)';
+      }
     });
     
     button.addEventListener('mouseleave', () => {
-      button.style.transform = 'translateY(0)';
-      button.style.boxShadow = '0 4px 12px rgba(0,102,204,0.3)';
+      if (!dragHandler.isDragging) {
+        button.style.transform = 'translateY(0)';
+        button.style.boxShadow = '0 4px 12px rgba(0,102,204,0.3)';
+      }
     });
     
+    // 點擊事件（僅在未顯著移動時觸發）
     button.addEventListener('click', () => {
-      chrome.runtime.sendMessage({ action: 'openPopup' });
+      if (!dragHandler.hasMovedSignificantly) {
+        chrome.runtime.sendMessage({ action: 'openPopup' });
+      }
     });
     
     document.body.appendChild(button);
+    console.log('✅ Universal scraper button initialized for', siteConfig.name);
   }
+}
+
+// Message listener for universal scraper
+chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
+  console.log('Universal scraper received message:', request);
+  
+  if (request.action === 'ping') {
+    console.log('Ping received, responding...');
+    const currentSite = SiteDetector.getCurrentSite();
+    const isJobPage = SiteDetector.isJobPage();
+    sendResponse({ 
+      success: true, 
+      message: 'Universal scraper loaded', 
+      url: window.location.href,
+      site: currentSite,
+      isJobPage: isJobPage
+    });
+  } else if (request.action === 'debug') {
+    debugPageElements();
+    sendResponse({ success: true, message: 'Debug completed' });
+  } else if (request.action === 'scrapeJob') {
+    console.log('Scrape job request received');
+    (async () => {
+      try {
+        // 檢查當前頁面是否為支援的職缺頁面
+        const currentSite = SiteDetector.getCurrentSite();
+        if (currentSite === 'unknown') {
+          throw new Error('Unsupported job site');
+        }
+        
+        if (!SiteDetector.isJobPage()) {
+          throw new Error('Not on a job page');
+        }
+        
+        // 使用工廠模式創建對應的抓取器
+        const scraper = JobScraperFactory.createScraper(currentSite);
+        if (!scraper) {
+          throw new Error(`Scraper not available for ${currentSite}`);
+        }
+        
+        // 執行抓取
+        const jobData = await scraper.scrapeJob();
+        console.log('Job data scraped:', jobData);
+        sendResponse({ success: true, data: jobData });
+      } catch (error) {
+        console.error('Scraping error:', error);
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+  }
+  return true;
+});
+
+// Show scraping button after page loads
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initScraper);
+} else {
+  initScraper();
 }
