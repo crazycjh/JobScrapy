@@ -7,6 +7,19 @@
       width: 350px;
       padding: 20px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      /* 防止滾動條抖動：現代方案 */
+      overflow-y: auto;
+      scrollbar-gutter: stable;
+      /* 備用方案：確保有足夠空間容納滾動條 */
+      box-sizing: border-box;
+      min-height: 100vh;
+    }
+    
+    /* 對於不支援 scrollbar-gutter 的瀏覽器，強制顯示滾動條 */
+    @supports not (scrollbar-gutter: stable) {
+      body {
+        overflow-y: scroll;
+      }
     }
     
     .header {
@@ -166,7 +179,7 @@
     }
     
     .toggle-icon {
-      transition: transform 0.3s ease;
+      transition: transform 0.2s ease;
     }
     
     .section-toggle.active .toggle-icon {
@@ -176,20 +189,96 @@
     .collapsible-content {
       max-height: 0;
       overflow: hidden;
-      transition: max-height 0.3s ease;
+      transition: max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                  padding 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                  border 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       border: none;
       background: none;
-      padding: 0;
+      padding: 0 15px;
       margin: 0;
     }
     
     .collapsible-content.active {
-      max-height: 500px;
       padding: 15px;
       background: #f8f9fa;
       border: 1px solid #e5e7eb;
       border-top: none;
       border-radius: 0 0 6px 6px;
+    }
+    
+    /* AI 啟用開關樣式 */
+    .ai-toggle-section {
+      background: #ffffff;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      font-weight: 600;
+      color: #374151;
+    }
+    
+    .ai-checkbox {
+      display: none;
+    }
+    
+    .checkmark {
+      height: 20px;
+      width: 20px;
+      background-color: #ffffff;
+      border: 2px solid #d1d5db;
+      border-radius: 4px;
+      margin-right: 10px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    
+    .ai-checkbox:checked + .checkmark {
+      background-color: #2563eb;
+      border-color: #2563eb;
+    }
+    
+    .checkmark:after {
+      content: "";
+      position: absolute;
+      display: none;
+      left: 6px;
+      top: 2px;
+      width: 6px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    
+    .ai-checkbox:checked + .checkmark:after {
+      display: block;
+    }
+    
+    .checkbox-label {
+      font-size: 16px;
+    }
+    
+    .help-text {
+      margin: 8px 0 0 30px;
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: normal;
+    }
+    
+    .ai-config-area {
+      transition: opacity 0.3s ease, max-height 0.3s ease;
+      overflow: hidden;
+    }
+    
+    .ai-config-area.disabled {
+      opacity: 0.4;
+      pointer-events: none;
     }
   </style>
 </head>
@@ -197,6 +286,16 @@
   <div class="header">
     <div class="logo">📋</div>
     <h3>LinkedIn 職缺抓取器</h3>
+  </div>
+
+  <!-- AI 啟用開關 -->
+  <div class="form-group ai-toggle-section" style="margin-bottom: 15px;">
+    <label class="checkbox-container">
+      <input type="checkbox" id="enableAI" class="ai-checkbox">
+      <span class="checkmark"></span>
+      <span class="checkbox-label">🤖 啟用 AI 分析</span>
+    </label>
+    <p class="help-text">開啟後將使用 AI 分析職缺並提取結構化資訊</p>
   </div>
 
   <!-- 主要功能按鈕 -->
@@ -233,6 +332,10 @@
       <span class="toggle-icon">▼</span>
     </button>
     <div class="config-section collapsible-content" id="aiConfig">
+      
+      
+      <!-- AI 配置區域 -->
+      <div class="ai-config-area" id="aiConfigArea">
       <div class="form-group">
         <label for="aiProvider">AI 平台：</label>
         <select id="aiProvider" class="form-control">
@@ -259,6 +362,7 @@
       </div>
       
       <button id="saveAiConfig" class="btn btn-secondary">💾 儲存 AI 設定</button>
+      </div>
     </div>
   </div>
 

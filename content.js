@@ -364,66 +364,112 @@ class LinkedInJobScraper {
         // 獲取所有文字內容，包括 span 標籤內的內容
         let fullText = '';
         
-        // 收集所有 span 元素的文字
-        const spans = element.querySelectorAll('span');
-        console.log(`Found ${spans.length} span elements in description`);
+        // 處理所有子節點（包括純文本節點和元素節點）
+        const allNodes = Array.from(element.childNodes);
+        console.log(`Found ${allNodes.length} child nodes in description`);
         
-        if (spans.length > 0) {
-          // 更智能的 span 處理 - 考慮 DOM 結構和位置
-          const processedSpans = [];
+        // 輔助函數：檢查是否為標題文字
+        const isRequirementTitle = (text) => {
+          return /^(Requirements?|Qualifications?|What we need|What we're looking for|必備條件|工作要求|申請條件)$/i.test(text.trim());
+        };
+        
+        if (allNodes.length > 0) {
+          // 處理所有節點 - 包括文本節點和元素節點
+          const processedNodes = [];
           
-          spans.forEach((span, index) => {
-            const text = span.textContent?.trim();
-            if (text && text.length > 0) { // 不過濾短文字，因為可能是重要的連接詞
-              
-              // 檢查前一個兄弟節點，判斷是否需要空格
-              let needsLeadingSpace = false;
-              if (index > 0 && fullText.length > 0) {
-                const prevSibling = span.previousSibling;
-                const lastChar = fullText.slice(-1);
-                const firstChar = text.charAt(0);
-                
-                // 如果前一個字符不是空白，且當前字符是字母或數字，則需要空格
-                if (!lastChar.match(/[\s\n]/) && firstChar.match(/[a-zA-Z0-9]/)) {
-                  needsLeadingSpace = true;
-                }
-                
-                // 檢查是否跨越了不同的 DOM 元素
-                if (prevSibling && prevSibling.nodeType === Node.TEXT_NODE) {
-                  const siblingText = prevSibling.textContent?.trim();
-                  if (siblingText && !siblingText.match(/[\s\n]$/)) {
-                    needsLeadingSpace = true;
-                  }
+          allNodes.forEach((node, index) => {
+            // 處理純文本節點
+            if (node.nodeType === Node.TEXT_NODE) {
+              const text = node.textContent?.trim();
+              if (text && text.length > 0) {
+                if (isRequirementTitle(text)) {
+                  // 標題文字特殊處理
+                  fullText += '\n\n**' + text + '**\n';
+                  processedNodes.push({ type: 'text_title', original: text, processed: '**' + text + '**' });
+                } else {
+                  // 普通文本
+                  fullText += text + '\n\n';
+                  processedNodes.push({ type: 'text', original: text, processed: text });
                 }
               }
-              
-              // 檢查是否需要尾隨空格
-              let needsTrailingSpace = false;
-              const nextSibling = span.nextSibling;
-              if (nextSibling) {
-                if (nextSibling.nodeType === Node.TEXT_NODE) {
-                  const siblingText = nextSibling.textContent?.trim();
-                  if (siblingText && !siblingText.match(/^[\s\n]/)) {
-                    needsTrailingSpace = true;
+            }
+            // 處理元素節點（span, li 等）
+            else if (node.nodeType === Node.ELEMENT_NODE && node.tagName) {
+              if (node.tagName.toLowerCase() === 'span') {
+                const text = node.textContent?.trim();
+                if (text && text.length > 0) { // 不過濾短文字，因為可能是重要的連接詞
+                  
+                  // 檢查 span 內部是否包含 LI 元素
+                  const containsListItems = node.querySelectorAll('li').length > 0;
+                  
+                  // 檢查前一個兄弟節點，判斷是否需要空格
+                  let needsLeadingSpace = false;
+                  if (index > 0 && fullText.length > 0) {
+                    const prevSibling = node.previousSibling;
+                    const lastChar = fullText.slice(-1);
+                    const firstChar = text.charAt(0);
+                    
+                    // 如果前一個字符不是空白，且當前字符是字母或數字，則需要空格
+                    if (!lastChar.match(/[\s\n]/) && firstChar.match(/[a-zA-Z0-9]/)) {
+                      needsLeadingSpace = true;
+                    }
+                    
+                    // 檢查是否跨越了不同的 DOM 元素
+                    if (prevSibling && prevSibling.nodeType === Node.TEXT_NODE) {
+                      const siblingText = prevSibling.textContent?.trim();
+                      if (siblingText && !siblingText.match(/[\s\n]$/)) {
+                        needsLeadingSpace = true;
+                      }
+                    }
                   }
-                } else if (nextSibling.nodeType === Node.ELEMENT_NODE) {
-                  const nextText = nextSibling.textContent?.trim();
-                  if (nextText && !text.match(/[.!?;:,\-\n\s]$/) && nextText.match(/^[a-zA-Z0-9]/)) {
-                    needsTrailingSpace = true;
+                  
+                  // 檢查是否需要尾隨空格
+                  let needsTrailingSpace = false;
+                  const nextSibling = node.nextSibling;
+                  if (nextSibling) {
+                    if (nextSibling.nodeType === Node.TEXT_NODE) {
+                      const siblingText = nextSibling.textContent?.trim();
+                      if (siblingText && !siblingText.match(/^[\s\n]/)) {
+                        needsTrailingSpace = true;
+                      }
+                    } else if (nextSibling.nodeType === Node.ELEMENT_NODE) {
+                      const nextText = nextSibling.textContent?.trim();
+                      if (nextText && !text.match(/[.!?;:,\-\n\s]$/) && nextText.match(/^[a-zA-Z0-9]/)) {
+                        needsTrailingSpace = true;
+                      }
+                    }
                   }
+                  
+                  let processedText = text;
+                  if (needsLeadingSpace) processedText = ' ' + processedText;
+                  if (needsTrailingSpace) processedText = processedText + ' ';
+                  
+                  // 如果 span 包含 LI 元素，需要特殊處理
+                  if (containsListItems) {
+                    // 獲取 span 內的所有 LI 元素
+                    const listItems = node.querySelectorAll('li');
+                    let listText = '';
+                    
+                    listItems.forEach(li => {
+                      const liText = li.textContent?.trim();
+                      if (liText) {
+                        listText += '- ' + liText + '\n';
+                      }
+                    });
+                    
+                    fullText += listText + '\n'; // 列表後加一個額外換行
+                  } else {
+                    // 在每個有內容的 span 後面加上雙換行符號
+                    fullText += processedText + '\n\n';
+                  }
+                  
+                  processedNodes.push({ type: 'span', original: text, processed: processedText, containsLists: containsListItems });
                 }
               }
-              
-              let processedText = text;
-              if (needsLeadingSpace) processedText = ' ' + processedText;
-              if (needsTrailingSpace) processedText = processedText + ' ';
-              
-              fullText += processedText;
-              processedSpans.push({ original: text, processed: processedText });
             }
           });
           
-          console.log(`Processed ${processedSpans.length} spans:`, processedSpans.slice(0, 5));
+          console.log(`Processed ${processedNodes.length} nodes:`, processedNodes.slice(0, 5));
         }
         
         // 如果沒找到有用的 span 內容，嘗試更好的提取方法
@@ -457,22 +503,37 @@ class LinkedInJobScraper {
               }
               
               elementsToProcess.forEach(el => {
-                // 在塊級元素前後添加換行，確保語義塊分離
-                if (['DIV', 'P', 'BR', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'SECTION', 'ARTICLE'].includes(el.tagName)) {
-                  if (el.tagName === 'BR') {
-                    el.replaceWith(document.createTextNode('\n'));
-                  } else {
-                    // 為塊級元素添加更明確的分隔
-                    el.before(document.createTextNode('\n '));
-                    el.after(document.createTextNode(' \n'));
-                  }
-                }
-                // 對於可能包含獨立語義內容的內聯元素，確保有適當的空格
-                else if (['SPAN', 'A', 'STRONG', 'EM', 'B', 'I'].includes(el.tagName)) {
-                  // 檢查元素內容是否是完整的詞或句子
+                // 針對不同元素做格式化處理
+                if (el.tagName === 'BR') {
+                  el.replaceWith(document.createTextNode('\n'));
+                } 
+                else if (el.tagName === 'LI') {
+                  // LI 元素：前面加 "- "
                   const text = el.textContent?.trim();
                   if (text && text.length > 0) {
-                    // 檢查前後是否需要空格分隔
+                    el.before(document.createTextNode('\n- '));
+                    el.after(document.createTextNode('\n'));
+                  }
+                }
+                else if (['DIV', 'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'SECTION', 'ARTICLE'].includes(el.tagName)) {
+                  // 塊級元素：前後添加換行
+                  const text = el.textContent?.trim();
+                  if (text && text.length > 0) {
+                    el.before(document.createTextNode('\n'));
+                    el.after(document.createTextNode('\n'));
+                  }
+                }
+                else if (el.tagName === 'SPAN') {
+                  // SPAN 元素：有內容時後面加兩個換行符號，形成段落分隔
+                  const text = el.textContent?.trim();
+                  if (text && text.length > 0) {
+                    el.after(document.createTextNode('\n\n'));
+                  }
+                }
+                else if (['A', 'STRONG', 'EM', 'B', 'I'].includes(el.tagName)) {
+                  // 其他內聯元素：確保適當的空格分隔
+                  const text = el.textContent?.trim();
+                  if (text && text.length > 0) {
                     const prevSibling = el.previousSibling;
                     const nextSibling = el.nextSibling;
                     
@@ -498,23 +559,18 @@ class LinkedInJobScraper {
         
         // 清理文字 - 更精確的處理
         let cleanedText = fullText
-          // 先處理多重換行
-          .replace(/\n\s*\n/g, '\n')
-          // 處理行內多重空格，但保留單個空格和換行
+          // 處理行內多重空格，但保留換行
           .replace(/[ \t]+/g, ' ')
           // 清理行首行尾空格
           .replace(/[ ]+\n/g, '\n')
           .replace(/\n[ ]+/g, '\n')
+          // 把3個或更多連續換行合併成雙換行（保持段落分隔）
+          .replace(/\n{3,}/g, '\n\n')
           // 最終去除首尾空格
           .trim();
-
-        // 最後清理多重空格，不做額外的單詞修復
-        cleanedText = cleanedText
-          // 只清理多重空格，保持原文完整性
-          .replace(/\s+/g, ' ')
-          .trim();
         
-        console.log(`✅ Extracted description (${cleanedText.length} chars):`, cleanedText.substring(0, 100) + '...');
+        console.log(`✅ Extracted description (${cleanedText.length} chars):`, cleanedText.substring(0, 200) + '...');
+        console.log('🔍 First 500 chars with line breaks visible:', JSON.stringify(cleanedText.substring(0, 500)));
         return cleanedText;
       }
       
@@ -528,66 +584,104 @@ class LinkedInJobScraper {
 
   getRequirements() {
     const description = this.getDescription();
+    console.log("getRequirements - description preview:", description.substring(0, 200));
     
-    // 更智能的關鍵字識別，支援中英文
+    // 更新的正則表達式，支援新格式
     const reqPatterns = [
-      // 英文模式
-      /(?:Requirements?|Qualifications?|What we're looking for|Skills?|Experience?):?(.*?)(?=\n\n|\n[A-Z]|We offer|Benefits|$)/is,
+      // 粗體格式：**Requirements**
+      /\*\*(Requirements?|Qualifications?|What we need|What we're looking for)\*\*[\s\n]+(.*?)(?=\n\n\*\*|\n\n[A-Z]|\nBenefits|\nWHAT|\nWHY|\nABOUT|$)/is,
+      
+      // 帶冒號格式：Requirements:
+      /(?:Requirements?|Qualifications?|What we need|What we're looking for):[\s\n]+(.*?)(?=\n\n[A-Z]|\nBenefits|\nWHAT|\nWHY|\nABOUT|$)/is,
+      
+      // 無冒號格式：Requirements（單獨行）
+      /(?:^|\n)(Requirements?|Qualifications?|What we need|What we're looking for)[\s\n]+(.*?)(?=\n\n[A-Z]|\nBenefits|\nWHAT|\nWHY|\nABOUT|$)/is,
+      
       // 中文模式
-      /(?:職位要求|工作要求|申請條件|必備技能|工作經驗|資格要求):?(.*?)(?=\n\n|福利|待遇|$)/is,
-      // 項目符號模式 (• - *) - 加上 g 標誌
-      /(?:^|\n)[\s]*[•\-\*\+]\s*(.*?)$/gm
+      /(?:\*\*)?(職位要求|工作要求|申請條件|必備技能|工作經驗|資格要求)(?:\*\*)?:?[\s\n]+(.*?)(?=\n\n|福利|待遇|$)/is
     ];
     
-    const requirements = new Set(); // 使用 Set 避免重複
-    
-    reqPatterns.forEach(pattern => {
+    for (let i = 0; i < reqPatterns.length; i++) {
+      const pattern = reqPatterns[i];
       try {
-        if (pattern.global) {
-          // 有 g 標誌的正則表達式，使用 matchAll
-          const matches = [...description.matchAll(pattern)];
-          matches.forEach(match => {
-            if (match && match[1]) {
-              const req = match[1].trim();
-              if (req.length > 10) {
-                requirements.add(req);
-              }
-            }
+        console.log(`🔍 Trying requirements pattern ${i + 1}:`, pattern.toString());
+        const match = description.match(pattern);
+        if (match) {
+          console.log('✅ Requirements regex matched:', {
+            patternIndex: i + 1,
+            fullMatch: match[0].substring(0, 150) + '...',
+            extracted: match[2] ? match[2].substring(0, 150) + '...' : (match[1] ? match[1].substring(0, 150) + '...' : 'No capture group')
           });
-        } else {
-          // 沒有 g 標誌的正則表達式，使用 match
-          const match = description.match(pattern);
-          if (match && match[1]) {
-            const req = match[1].trim();
-            if (req.length > 10) {
-              requirements.add(req);
+          
+          // 根據不同的正則表達式，提取內容的位置可能不同
+          const extractedContent = match[2] || match[1]; // 有些正則表達式捕獲組在 [2]，有些在 [1]
+          if (extractedContent) {
+            const req = extractedContent.trim();
+            if (req.length > 20) { 
+              console.log('🎯 Found requirements content:', req.substring(0, 100) + '...');
+              return req;
             }
           }
+        } else {
+          console.log(`❌ Pattern ${i + 1} didn't match`);
         }
       } catch (error) {
         console.error('Error processing pattern:', pattern, error);
       }
-    });
+    }
     
-    return requirements.size > 0 ? Array.from(requirements).join('\n') : this.extractStructuredInfo(description, 'requirements');
+    return '';
   }
 
   getBenefits() {
     const description = this.getDescription();
+    console.log("getBenefits - description preview:", description.substring(0, 200));
+    
+    // 更新的正則表達式，支援新格式
     const benefitPatterns = [
-      // 英文模式
-      /(?:Benefits?|What we offer|Perks?|Compensation|Package):?(.*?)(?=\n\n|\n[A-Z]|Requirements|$)/is,
-      // 中文模式  
-      /(?:福利|待遇|薪資福利|員工福利|我們提供):?(.*?)(?=\n\n|職位要求|工作要求|$)/is
+      // 粗體格式：**Benefits**
+      /\*\*(Benefits?|What we offer|Perks?|Compensation|Package|Compensation and Benefits)\*\*[\s\n]+(.*?)(?=\n\n\*\*|\n\n[A-Z]|\nRequirements|\nWHAT|\nWHY|\nABOUT|$)/is,
+      
+      // 帶冒號格式：Benefits:
+      /(?:Benefits?|What we offer|Perks?|Compensation|Package):[\s\n]+(.*?)(?=\n\n[A-Z]|\nRequirements|\nWHAT|\nWHY|\nABOUT|$)/is,
+      
+      // 無冒號格式：Benefits（單獨行）
+      /(?:^|\n)(Benefits?|What we offer|Perks?|Compensation|Package)[\s\n]+(.*?)(?=\n\n[A-Z]|\nRequirements|\nWHAT|\nWHY|\nABOUT|$)/is,
+      
+      // 中文模式
+      /(?:\*\*)?(福利|待遇|薪資福利|員工福利|我們提供|薪酬福利)(?:\*\*)?:?[\s\n]+(.*?)(?=\n\n|職位要求|工作要求|$)/is
     ];
     
-    for (const pattern of benefitPatterns) {
-      const match = description.match(pattern);
-      if (match && match[1]) {
-        return match[1].trim();
+    for (let i = 0; i < benefitPatterns.length; i++) {
+      const pattern = benefitPatterns[i];
+      try {
+        console.log(`🔍 Trying benefits pattern ${i + 1}:`, pattern.toString());
+        const match = description.match(pattern);
+        if (match) {
+          console.log('✅ Benefits regex matched:', {
+            patternIndex: i + 1,
+            fullMatch: match[0].substring(0, 150) + '...',
+            extracted: match[2] ? match[2].substring(0, 150) + '...' : (match[1] ? match[1].substring(0, 150) + '...' : 'No capture group')
+          });
+          
+          // 根據不同的正則表達式，提取內容的位置可能不同
+          const extractedContent = match[2] || match[1]; // 有些正則表達式捕獲組在 [2]，有些在 [1]
+          if (extractedContent) {
+            const benefits = extractedContent.trim();
+            if (benefits.length > 20) { 
+              console.log('🎯 Found benefits content:', benefits.substring(0, 100) + '...');
+              return benefits;
+            }
+          }
+        } else {
+          console.log(`❌ Pattern ${i + 1} didn't match`);
+        }
+      } catch (error) {
+        console.error('Error processing pattern:', pattern, error);
       }
     }
-    return this.extractStructuredInfo(description, 'benefits');
+    
+    return '';
   }
 
   // 新增：結構化資訊提取方法

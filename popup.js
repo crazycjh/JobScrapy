@@ -6,13 +6,14 @@ class LinkedInJobExtension {
     this.aiProvider = 'openai';
     this.aiApiKey = '';
     this.aiModel = '';
+    this.enableAI = false;
     this.init();
   }
 
   async init() {
     // 載入儲存的設定
     const config = await chrome.storage.sync.get([
-      'notionToken', 'databaseId', 'aiProvider', 'aiConfigs'
+      'notionToken', 'databaseId', 'aiProvider', 'aiConfigs', 'enableAI'
     ]);
     
     // Notion 設定
@@ -27,6 +28,12 @@ class LinkedInJobExtension {
     
     // AI 設定
     this.aiConfigs = config.aiConfigs || {};
+    this.enableAI = config.enableAI || false;
+    
+    // 設定 AI 開關狀態
+    document.getElementById('enableAI').checked = this.enableAI;
+    this.updateAIConfigVisibility();
+    
     if (config.aiProvider) {
       document.getElementById('aiProvider').value = config.aiProvider;
       this.aiProvider = config.aiProvider;
@@ -47,6 +54,9 @@ class LinkedInJobExtension {
     // 綁定折疊功能
     document.getElementById('notionToggle').addEventListener('click', () => this.toggleSection('notionConfig', 'notionToggle'));
     document.getElementById('aiToggle').addEventListener('click', () => this.toggleSection('aiConfig', 'aiToggle'));
+    
+    // 綁定 AI 開關
+    document.getElementById('enableAI').addEventListener('change', () => this.onAIToggleChange());
     
     // 加入調試按鈕
     const debugBtn = document.createElement('button');
@@ -132,8 +142,8 @@ class LinkedInJobExtension {
       let jobData = response.data;
       console.log('🔍 原始抓取資料:', jobData);
 
-      // 如果有設定 AI，使用 AI 分析優化資料
-      if (this.aiApiKey && this.aiModel) {
+      // 根據 AI 開關決定是否使用 AI 分析
+      if (this.enableAI && this.aiApiKey && this.aiModel) {
         this.showStatus('正在使用 AI 分析職缺資料...', '');
         
         try {
@@ -151,15 +161,24 @@ class LinkedInJobExtension {
           // 繼續使用原始資料，不中斷流程
         }
       } else {
-        this.showStatus('資料抓取成功，正在上傳到 Notion...', '');
+        if (this.enableAI && (!this.aiApiKey || !this.aiModel)) {
+          this.showStatus('AI 已啟用但未完成設定，使用原始資料上傳...', '');
+        } else {
+          this.showStatus('資料抓取成功，正在上傳到 Notion...', '');
+        }
       }
 
       // 上傳到 Notion
       await this.uploadToNotion(jobData);
       
-      const successMessage = this.aiApiKey && this.aiModel ? 
-        '✅ 職缺已成功分析並儲存到 Notion！' : 
-        '✅ 職缺已成功儲存到 Notion！';
+      let successMessage;
+      if (this.enableAI && this.aiApiKey && this.aiModel && jobData.aiProcessed) {
+        successMessage = '✅ 職缺已成功分析並儲存到 Notion！';
+      } else if (this.enableAI) {
+        successMessage = '✅ 職缺已儲存到 Notion（未使用 AI 分析）';
+      } else {
+        successMessage = '✅ 職缺已成功儲存到 Notion！';
+      }
       
       this.showStatus(successMessage, 'success');
 
@@ -208,8 +227,8 @@ class LinkedInJobExtension {
     
     // 保留原始內容，由 createTextBlocks 處理分割
     const description = jobData.description || '無描述';
-    const requirements = jobData.requirements || '請查看工作描述';
-    const benefits = jobData.benefits || '請查看工作描述';
+    const requirements = jobData.requirements || '';
+    const benefits = jobData.benefits || '';
     
     console.log('📝 Original content lengths:');
     console.log(`Description: ${description.length} chars`);
@@ -244,7 +263,7 @@ class LinkedInJobExtension {
           type: "paragraph",
           paragraph: { 
             rich_text: [{ 
-              text: { content: `📄 ${title} (內容較長，已分段顯示)` },
+              text: { content: ` (內容較長，已分段顯示)` },
               annotations: { italic: true, color: "gray" }
             }] 
           }
@@ -287,24 +306,19 @@ class LinkedInJobExtension {
           }
         }
         
-        // 為續篇添加標記
-        if (partNum > 1) {
-          blocks.push({
-            object: "block",
-            type: "paragraph",
-            paragraph: { 
-              rich_text: [{ 
-                text: { content: `--- 第 ${partNum} 部分 ---` },
-                annotations: { bold: true, color: "blue" }
-              }] 
-            }
-          });
-        }
+        // 移除分段標記，直接處理內容
         
-        blocks.push({
-          object: "block",
-          type: "paragraph",
-          paragraph: { rich_text: [{ text: { content: chunk.trim() } }] }
+        // 將 chunk 按雙換行分割成段落
+        const paragraphs = chunk.split('\n\n').filter(para => para.trim().length > 0);
+        paragraphs.forEach(para => {
+          const trimmedPara = para.trim();
+          if (trimmedPara) {
+            blocks.push({
+              object: "block",
+              type: "paragraph",
+              paragraph: { rich_text: [{ text: { content: trimmedPara } }] }
+            });
+          }
         });
         
         remaining = remaining.substring(chunk.length).trim();
@@ -346,40 +360,42 @@ class LinkedInJobExtension {
           select: { name: this.cleanSelectValue(jobData.jobType || '未指定') }
         },
         
-        // AI 分析欄位
-        "職責": {
-          rich_text: [{ text: { content: this.truncateText(jobData.職責 || '', 1900) } }]
-        },
-        "必備技能": {
-          rich_text: [{ text: { content: this.truncateText(jobData.必備技能 || '', 1900) } }]
-        },
-        "加分技能": {
-          rich_text: [{ text: { content: this.truncateText(jobData.加分技能 || '', 1900) } }]
-        },
-        "工具框架": {
-          rich_text: [{ text: { content: this.truncateText(jobData.工具框架 || '', 1900) } }]
-        },
-        "最低經驗年數": {
-          number: jobData.最低經驗年數 || null
-        },
-        "經驗等級": {
-          select: jobData.經驗等級 ? { name: this.cleanSelectValue(jobData.經驗等級) } : null
-        },
-        "學歷要求": {
-          select: jobData.學歷要求 ? { name: this.cleanSelectValue(jobData.學歷要求) } : null
-        },
-        "語言要求": {
-          rich_text: [{ text: { content: this.truncateText(jobData.語言要求 || '', 1900) } }]
-        },
-        "軟技能": {
-          rich_text: [{ text: { content: this.truncateText(jobData.軟技能 || '', 1900) } }]
-        },
-        "產業領域": {
-          rich_text: [{ text: { content: this.truncateText(jobData.產業領域 || '', 1900) } }]
-        },
-        "福利亮點": {
-          rich_text: [{ text: { content: this.truncateText(jobData.福利亮點 || '', 1900) } }]
-        },
+        // AI 分析欄位（僅在AI處理時添加）
+        ...(jobData.aiProcessed ? {
+          "職責": {
+            rich_text: [{ text: { content: this.truncateText(jobData.職責 || '', 1900) } }]
+          },
+          "必備技能": {
+            rich_text: [{ text: { content: this.truncateText(jobData.必備技能 || '', 1900) } }]
+          },
+          "加分技能": {
+            rich_text: [{ text: { content: this.truncateText(jobData.加分技能 || '', 1900) } }]
+          },
+          "工具框架": {
+            rich_text: [{ text: { content: this.truncateText(jobData.工具框架 || '', 1900) } }]
+          },
+          "最低經驗年數": {
+            number: jobData.最低經驗年數 || null
+          },
+          "經驗等級": {
+            select: jobData.經驗等級 ? { name: this.cleanSelectValue(jobData.經驗等級) } : null
+          },
+          "學歷要求": {
+            select: jobData.學歷要求 ? { name: this.cleanSelectValue(jobData.學歷要求) } : null
+          },
+          "語言要求": {
+            rich_text: [{ text: { content: this.truncateText(jobData.語言要求 || '', 1900) } }]
+          },
+          "軟技能": {
+            rich_text: [{ text: { content: this.truncateText(jobData.軟技能 || '', 1900) } }]
+          },
+          "產業領域": {
+            rich_text: [{ text: { content: this.truncateText(jobData.產業領域 || '', 1900) } }]
+          },
+          "福利亮點": {
+            rich_text: [{ text: { content: this.truncateText(jobData.福利亮點 || '', 1900) } }]
+          }
+        } : {}),
         
         // 原有欄位
         "原始經驗要求": {
@@ -479,15 +495,18 @@ class LinkedInJobExtension {
           }
         ] : []),
         
-        // 原文內容在後面
-        {
-          object: "block",
-          type: "heading_1",
-          heading_1: {
-            rich_text: [{ text: { content: "📋 Original Job Posting" } }]
+        // 只有AI處理時才顯示"Original Job Posting"標題
+        ...(jobData.aiProcessed ? [
+          {
+            object: "block",
+            type: "heading_1",
+            heading_1: {
+              rich_text: [{ text: { content: "📋 Original Job Posting" } }]
+            }
           }
-        },
+        ] : []),
         
+        // Job Description (總是顯示)
         {
           object: "block",
           type: "heading_2",
@@ -495,25 +514,31 @@ class LinkedInJobExtension {
             rich_text: [{ text: { content: "📄 Job Description" } }]
           }
         },
-        ...createTextBlocks(jobData.aiProcessed && jobData.原始描述 ? jobData.原始描述 : description, 1800, 'Job Description'),
+        ...createTextBlocks(description, 1800, 'Job Description'),
         
-        {
-          object: "block",
-          type: "heading_2",
-          heading_2: {
-            rich_text: [{ text: { content: "📌 Requirements" } }]
-          }
-        },
-        ...createTextBlocks(requirements, 1800, 'Requirements'),
+        // Requirements (只在有內容時顯示)
+        ...(requirements && requirements.trim() ? [
+          {
+            object: "block",
+            type: "heading_2",
+            heading_2: {
+              rich_text: [{ text: { content: "📌 Requirements" } }]
+            }
+          },
+          ...createTextBlocks(requirements, 1800, 'Requirements')
+        ] : []),
         
-        {
-          object: "block",
-          type: "heading_2",
-          heading_2: {
-            rich_text: [{ text: { content: "🎁 Benefits" } }]
-          }
-        },
-        ...createTextBlocks(benefits, 1800, 'Benefits')
+        // Benefits (只在有內容時顯示)
+        ...(benefits && benefits.trim() ? [
+          {
+            object: "block",
+            type: "heading_2",
+            heading_2: {
+              rich_text: [{ text: { content: "🎁 Benefits" } }]
+            }
+          },
+          ...createTextBlocks(benefits, 1800, 'Benefits')
+        ] : [])
       ]
     };
 
@@ -1237,6 +1262,9 @@ Please ensure the output is valid JSON format without any other text.
       福利亮點: Array.isArray(aiAnalysis.benefits_highlights) ? aiAnalysis.benefits_highlights.join(', ') : '',
       
       // 保留完整的原始資料
+      description: originalData.description || '', // 保留原始的 description 欄位
+      requirements: originalData.requirements || '', // 保留原始的 requirements 欄位
+      benefits: originalData.benefits || '', // 保留原始的 benefits 欄位
       原始描述: originalData.description || '',
       
       // 工作類型的智能判斷：優先使用原始資料，AI 分析作為補充
@@ -1256,6 +1284,31 @@ Please ensure the output is valid JSON format without any other text.
     };
   }
 
+  // AI 開關變更處理
+  async onAIToggleChange() {
+    this.enableAI = document.getElementById('enableAI').checked;
+    this.updateAIConfigVisibility();
+    
+    // 儲存 AI 開關狀態
+    await chrome.storage.sync.set({ enableAI: this.enableAI });
+    
+    if (this.enableAI) {
+      this.showStatus('✅ AI 分析已啟用', 'success');
+    } else {
+      this.showStatus('ℹ️ AI 分析已停用，將直接使用原始資料', '');
+    }
+  }
+
+  // 更新 AI 配置區域的可見性
+  updateAIConfigVisibility() {
+    const aiConfigArea = document.getElementById('aiConfigArea');
+    if (this.enableAI) {
+      aiConfigArea.classList.remove('disabled');
+    } else {
+      aiConfigArea.classList.add('disabled');
+    }
+  }
+
   // 折疊/展開設定區塊
   toggleSection(contentId, toggleId) {
     const content = document.getElementById(contentId);
@@ -1264,11 +1317,28 @@ Please ensure the output is valid JSON format without any other text.
     const isActive = content.classList.contains('active');
     
     if (isActive) {
-      content.classList.remove('active');
-      toggle.classList.remove('active');
+      // 收起：先設置 max-height 為實際高度，然後動畫到 0
+      const currentHeight = content.scrollHeight;
+      content.style.maxHeight = currentHeight + 'px';
+      
+      requestAnimationFrame(() => {
+        content.style.maxHeight = '0px';
+        content.classList.remove('active');
+        toggle.classList.remove('active');
+      });
     } else {
+      // 展開：先添加 active class，然後計算並設置高度
       content.classList.add('active');
       toggle.classList.add('active');
+      
+      // 獲取展開後的實際高度（包含 padding）
+      const targetHeight = content.scrollHeight;
+      content.style.maxHeight = targetHeight + 'px';
+      
+      // 動畫完成後移除 max-height 限制，允許內容自然增長
+      setTimeout(() => {
+        content.style.maxHeight = 'none';
+      }, 200);
     }
   }
 
