@@ -1,6 +1,6 @@
 {
   "extensionName": {
-    "message": "通用職缺抓取器",
+    "message": "多平台職缺抓取工具",
     "description": "Extension name"
   },
   "extensionDescription": {
@@ -13,7 +13,7 @@
   },
   
   "headerTitle": {
-    "message": "通用職缺抓取器",
+    "message": "多平台職缺抓取工具",
     "description": "Header title in popup"
   },
   
@@ -230,5 +230,14 @@
   "languageSwitched": {
     "message": "語言已切換",
     "description": "Language switched confirmation"
+  },
+  
+  "getTokenHelp": {
+    "message": "點擊前往 Notion Integration 頁面獲取 API Token",
+    "description": "Help text for getting Notion token"
+  },
+  "getDatabaseIdHelp": {
+    "message": "點擊查看如何獲取 Database ID 的官方教學",
+    "description": "Help text for getting Database ID"
   }
 }

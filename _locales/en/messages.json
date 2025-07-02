@@ -230,5 +230,14 @@
   "languageSwitched": {
     "message": "Language switched",
     "description": "Language switched confirmation"
+  },
+  
+  "getTokenHelp": {
+    "message": "Click to go to Notion Integration page to get API Token",
+    "description": "Help text for getting Notion token"
+  },
+  "getDatabaseIdHelp": {
+    "message": "Click to view official tutorial on how to get Database ID",
+    "description": "Help text for getting Database ID"
   }
 }

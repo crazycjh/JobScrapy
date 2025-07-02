@@ -68,6 +68,10 @@ class LinkedInJobExtension {
     // 綁定語言切換按鈕
     document.getElementById('languageToggle').addEventListener('click', () => this.toggleLanguage());
     
+    // 綁定幫助鏈接按鈕
+    document.getElementById('getTokenBtn').addEventListener('click', () => this.openNotionTokenPage());
+    document.getElementById('getDatabaseIdBtn').addEventListener('click', () => this.openDatabaseIdHelp());
+    
     // 加入調試按鈕（僅開發模式）
     this.addDebugButton();
   }
@@ -321,8 +325,19 @@ class LinkedInJobExtension {
         }
       }
 
-      // 上傳到 Notion
-      await this.uploadToNotion(jobData);
+      // 上傳到 Notion (通過 background script)
+      const uploadResponse = await chrome.runtime.sendMessage({
+        action: 'uploadToNotion',
+        jobData: jobData,
+        config: {
+          notionToken: this.notionToken,
+          databaseId: this.databaseId
+        }
+      });
+
+      if (!uploadResponse || !uploadResponse.success) {
+        throw new Error(uploadResponse?.error || '上傳到 Notion 失敗');
+      }
       
       let successMessage;
       if (this.enableAI && this.aiApiKey && this.aiModel && jobData.aiProcessed) {
@@ -368,350 +383,7 @@ class LinkedInJobExtension {
     return result;
   }
 
-  async uploadToNotion(jobData) {
-    // 先檢查原始內容長度
-    console.log('📊 Original content lengths:');
-    console.log(`Description: ${(jobData.description || '').length} chars`);
-    console.log(`Requirements: ${(jobData.requirements || '').length} chars`);
-    console.log(`Benefits: ${(jobData.benefits || '').length} chars`);
-    console.log(`Title: ${(jobData.title || '').length} chars`);
-    console.log(`Company: ${(jobData.company || '').length} chars`);
-    console.log(`Location: ${(jobData.location || '').length} chars`);
-    
-    // 保留原始內容，由 createTextBlocks 處理分割
-    const description = jobData.description || '無描述';
-    const requirements = jobData.requirements || '';
-    const benefits = jobData.benefits || '';
-    
-    console.log('📝 Original content lengths:');
-    console.log(`Description: ${description.length} chars`);
-    console.log(`Requirements: ${requirements.length} chars`);
-    console.log(`Benefits: ${benefits.length} chars`);
-    
-    // 找出最長的內容
-    const contents = [
-      { name: 'Description', length: description.length },
-      { name: 'Requirements', length: requirements.length },
-      { name: 'Benefits', length: benefits.length }
-    ];
-    const longest = contents.reduce((prev, current) => (prev.length > current.length) ? prev : current);
-    console.log(`🏆 Longest content: ${longest.name} (${longest.length} chars)`);
-    
-    // 智能分割文字內容，方便用戶快速閱讀
-    const createTextBlocks = (text, maxLength = 1800, title = '') => {
-      if (!text || text.length <= maxLength) {
-        return [{ 
-          object: "block", 
-          type: "paragraph", 
-          paragraph: { rich_text: [{ text: { content: text || '' } }] } 
-        }];
-      }
-      
-      const blocks = [];
-      
-      // 如果有標題，先添加標題提示
-      if (title) {
-        blocks.push({
-          object: "block",
-          type: "paragraph",
-          paragraph: { 
-            rich_text: [{ 
-              text: { content: ` (內容較長，已分段顯示)` },
-              annotations: { italic: true, color: "gray" }
-            }] 
-          }
-        });
-      }
-      
-      let remaining = text;
-      let partNum = 1;
-      
-      while (remaining.length > 0) {
-        let chunk = remaining.substring(0, maxLength);
-        
-        // 智能分割：優先在自然斷點處分割
-        if (remaining.length > maxLength) {
-          // 1. 優先在段落間分割（雙換行）
-          const doubleLine = chunk.lastIndexOf('\n\n');
-          // 2. 其次在句子結尾分割
-          const lastPeriod = chunk.lastIndexOf('. ');
-          const lastExclamation = chunk.lastIndexOf('! ');
-          const lastQuestion = chunk.lastIndexOf('? ');
-          // 3. 再次在單換行處分割
-          const lastNewline = chunk.lastIndexOf('\n');
-          // 4. 最後在空格處分割
-          const lastSpace = chunk.lastIndexOf(' ');
-          
-          let splitPoint = -1;
-          
-          if (doubleLine > maxLength * 0.5) {
-            splitPoint = doubleLine + 2;
-          } else if (lastPeriod > maxLength * 0.6 || lastExclamation > maxLength * 0.6 || lastQuestion > maxLength * 0.6) {
-            splitPoint = Math.max(lastPeriod, lastExclamation, lastQuestion) + 2;
-          } else if (lastNewline > maxLength * 0.7) {
-            splitPoint = lastNewline + 1;
-          } else if (lastSpace > maxLength * 0.8) {
-            splitPoint = lastSpace + 1;
-          }
-          
-          if (splitPoint > 0) {
-            chunk = remaining.substring(0, splitPoint);
-          }
-        }
-        
-        // 移除分段標記，直接處理內容
-        
-        // 將 chunk 按雙換行分割成段落
-        const paragraphs = chunk.split('\n\n').filter(para => para.trim().length > 0);
-        paragraphs.forEach(para => {
-          const trimmedPara = para.trim();
-          if (trimmedPara) {
-            blocks.push({
-              object: "block",
-              type: "paragraph",
-              paragraph: { rich_text: [{ text: { content: trimmedPara } }] }
-            });
-          }
-        });
-        
-        remaining = remaining.substring(chunk.length).trim();
-        partNum++;
-        
-        // 安全措施：避免無限循環，但允許更多段落
-        if (partNum > 10) {
-          blocks.push({
-            object: "block",
-            type: "callout",
-            callout: {
-              icon: { emoji: "⚠️" },
-              rich_text: [{ text: { content: `內容過長，已顯示前 ${partNum-1} 段。剩餘 ${remaining.length} 字符已省略。` } }]
-            }
-          });
-          break;
-        }
-      }
-      
-      return blocks;
-    };
-
-    const notionPage = {
-      parent: { database_id: this.databaseId },
-      properties: {
-        "職位名稱": {
-          title: [{ text: { content: (jobData.title || '未知職位').substring(0, 2000) } }]
-        },
-        "公司": {
-          rich_text: [{ text: { content: (jobData.company || '未知公司').substring(0, 2000) } }]
-        },
-        "地點": {
-          rich_text: [{ text: { content: (jobData.location || '未知').substring(0, 2000) } }]
-        },
-        "薪資": {
-          rich_text: [{ text: { content: (jobData.salary || '未提供').substring(0, 2000) } }]
-        },
-        "工作類型": {
-          select: { name: this.cleanSelectValue(jobData.jobType || '未指定') }
-        },
-        
-        // AI 分析欄位（僅在AI處理時添加）
-        ...(jobData.aiProcessed ? {
-          "職責": {
-            rich_text: [{ text: { content: this.truncateText(jobData.職責 || '', 1900) } }]
-          },
-          "必備技能": {
-            rich_text: [{ text: { content: this.truncateText(jobData.必備技能 || '', 1900) } }]
-          },
-          "加分技能": {
-            rich_text: [{ text: { content: this.truncateText(jobData.加分技能 || '', 1900) } }]
-          },
-          "工具框架": {
-            rich_text: [{ text: { content: this.truncateText(jobData.工具框架 || '', 1900) } }]
-          },
-          "最低經驗年數": {
-            number: jobData.最低經驗年數 || null
-          },
-          "經驗等級": {
-            select: jobData.經驗等級 ? { name: this.cleanSelectValue(jobData.經驗等級) } : null
-          },
-          "學歷要求": {
-            select: jobData.學歷要求 ? { name: this.cleanSelectValue(jobData.學歷要求) } : null
-          },
-          "語言要求": {
-            rich_text: [{ text: { content: this.truncateText(jobData.語言要求 || '', 1900) } }]
-          },
-          "軟技能": {
-            rich_text: [{ text: { content: this.truncateText(jobData.軟技能 || '', 1900) } }]
-          },
-          "產業領域": {
-            rich_text: [{ text: { content: this.truncateText(jobData.產業領域 || '', 1900) } }]
-          },
-          "福利亮點": {
-            rich_text: [{ text: { content: this.truncateText(jobData.福利亮點 || '', 1900) } }]
-          }
-        } : {}),
-        
-        // 原有欄位
-        "原始經驗要求": {
-          rich_text: [{ text: { content: (jobData.experience || '未指定').substring(0, 2000) } }]
-        },
-        "狀態": {
-          select: { name: '待申請' }
-        },
-        "連結": {
-          url: jobData.url
-        },
-        "抓取時間": {
-          date: { start: jobData.scrapedAt.split('T')[0] }
-        },
-        "優先級": {
-          select: { name: '中' }
-        },
-        
-        // AI 處理標記
-        "AI 處理": {
-          checkbox: jobData.aiProcessed || false
-        },
-        "AI 模型": {
-          rich_text: [{ text: { content: jobData.aiModel ? `${jobData.aiProvider}:${jobData.aiModel}` : '' } }]
-        }
-      },
-      children: [
-        // AI 分析在前面（如果有的話）
-        ...(jobData.aiProcessed ? [
-          {
-            object: "block",
-            type: "heading_1",
-            heading_1: {
-              rich_text: [{ 
-                text: { content: "🤖 AI Structured Analysis" },
-                annotations: { color: "blue", bold: true }
-              }]
-            }
-          },
-          {
-            object: "block",
-            type: "callout",
-            callout: {
-              icon: { emoji: "🎯" },
-              rich_text: [{ text: { content: `This job posting has been analyzed by ${jobData.aiProvider}'s ${jobData.aiModel} model to extract structured information for resume matching.` } }]
-            }
-          },
-          
-          ...(jobData.職責 ? [
-            {
-              object: "block",
-              type: "heading_3",
-              heading_3: {
-                rich_text: [{ text: { content: "🎯 Key Responsibilities" } }]
-              }
-            },
-            ...createTextBlocks(jobData.職責, 1800, 'Key Responsibilities')
-          ] : []),
-          
-          ...(jobData.必備技能 ? [
-            {
-              object: "block",
-              type: "heading_3",
-              heading_3: {
-                rich_text: [{ text: { content: "⚡ Required Skills" } }]
-              }
-            },
-            ...createTextBlocks(jobData.必備技能, 1800, 'Required Skills')
-          ] : []),
-          
-          ...(jobData.加分技能 ? [
-            {
-              object: "block",
-              type: "heading_3",
-              heading_3: {
-                rich_text: [{ text: { content: "✨ Preferred Skills" } }]
-              }
-            },
-            ...createTextBlocks(jobData.加分技能, 1800, 'Preferred Skills')
-          ] : []),
-          
-          ...(jobData.工具框架 ? [
-            {
-              object: "block",
-              type: "heading_3",
-              heading_3: {
-                rich_text: [{ text: { content: "🛠️ Tools & Frameworks" } }]
-              }
-            },
-            ...createTextBlocks(jobData.工具框架, 1800, 'Tools & Frameworks')
-          ] : []),
-          
-          {
-            object: "block",
-            type: "divider",
-            divider: {}
-          }
-        ] : []),
-        
-        // 只有AI處理時才顯示"Original Job Posting"標題
-        ...(jobData.aiProcessed ? [
-          {
-            object: "block",
-            type: "heading_1",
-            heading_1: {
-              rich_text: [{ text: { content: "📋 Original Job Posting" } }]
-            }
-          }
-        ] : []),
-        
-        // Job Description (總是顯示)
-        {
-          object: "block",
-          type: "heading_2",
-          heading_2: {
-            rich_text: [{ text: { content: "📄 Job Description" } }]
-          }
-        },
-        ...createTextBlocks(description, 1800, 'Job Description'),
-        
-        // Requirements (只在有內容時顯示)
-        ...(requirements && requirements.trim() ? [
-          {
-            object: "block",
-            type: "heading_2",
-            heading_2: {
-              rich_text: [{ text: { content: "📌 Requirements" } }]
-            }
-          },
-          ...createTextBlocks(requirements, 1800, 'Requirements')
-        ] : []),
-        
-        // Benefits (只在有內容時顯示)
-        ...(benefits && benefits.trim() ? [
-          {
-            object: "block",
-            type: "heading_2",
-            heading_2: {
-              rich_text: [{ text: { content: "🎁 Benefits" } }]
-            }
-          },
-          ...createTextBlocks(benefits, 1800, 'Benefits')
-        ] : [])
-      ]
-    };
-
-    const response = await fetch('https://api.notion.com/v1/pages', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.notionToken}`,
-        'Content-Type': 'application/json',
-        'Notion-Version': '2022-06-28'
-      },
-      body: JSON.stringify(notionPage)
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(`Notion API 錯誤: ${error.message || response.statusText}`);
-    }
-
-    return await response.json();
-  }
+  // uploadToNotion 方法已移至 background.js 統一處理
 
   showPreview(data) {
     const preview = document.getElementById('preview');
@@ -1546,6 +1218,20 @@ Please ensure the output is valid JSON format without any other text.
         status.className = '';
       }, 3000);
     }
+  }
+  
+  // 打開 Notion Integration Token 設定頁面
+  openNotionTokenPage() {
+    chrome.tabs.create({
+      url: 'https://www.notion.so/my-integrations'
+    });
+  }
+  
+  // 打開 Database ID 幫助頁面
+  openDatabaseIdHelp() {
+    chrome.tabs.create({
+      url: 'https://developers.notion.com/docs/create-a-notion-integration#find-your-database-id'
+    });
   }
 }
 

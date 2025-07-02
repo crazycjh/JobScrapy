@@ -1151,6 +1151,230 @@ function debugPageElements() {
   });
 }
 
+// 全局操作狀態管理器
+class ScrapingStateManager {
+  constructor() {
+    this.isScrapingInProgress = false;
+    this.currentToast = null;
+  }
+
+  startScraping() {
+    if (this.isScrapingInProgress) {
+      return false; // 已有操作在進行中
+    }
+    this.isScrapingInProgress = true;
+    return true;
+  }
+
+  finishScraping() {
+    this.isScrapingInProgress = false;
+  }
+
+  canStartNewScraping() {
+    return !this.isScrapingInProgress;
+  }
+}
+
+// 全局狀態管理器實例
+const scrapingStateManager = new ScrapingStateManager();
+
+// Toast 通知系統
+class ToastNotification {
+  constructor() {
+    this.container = null;
+    this.createContainer();
+  }
+
+  createContainer() {
+    // 移除已存在的容器
+    const existing = document.getElementById('universal-scraper-toast-container');
+    if (existing) {
+      existing.remove();
+    }
+
+    this.container = document.createElement('div');
+    this.container.id = 'universal-scraper-toast-container';
+    this.container.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      pointer-events: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    `;
+    document.body.appendChild(this.container);
+  }
+
+  show(message, type = 'info', duration = 0) {
+    const toast = document.createElement('div');
+    toast.className = 'universal-scraper-toast';
+    
+    const colors = {
+      info: { bg: '#2563eb', icon: 'ℹ️' },
+      success: { bg: '#059669', icon: '✅' },
+      error: { bg: '#dc2626', icon: '❌' },
+      warning: { bg: '#d97706', icon: '⚠️' },
+      loading: { bg: '#0066cc', icon: '⏳' }
+    };
+
+    const style = colors[type] || colors.info;
+    
+    toast.style.cssText = `
+      background: ${style.bg};
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      pointer-events: auto;
+      cursor: pointer;
+      max-width: 300px;
+      word-wrap: break-word;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    `;
+
+    toast.innerHTML = `
+      <span style="font-size: 16px;">${style.icon}</span>
+      <span style="flex: 1;">${message}</span>
+    `;
+
+    this.container.appendChild(toast);
+
+    // 觸發動畫
+    setTimeout(() => {
+      toast.style.transform = 'translateX(0)';
+    }, 10);
+
+    // 點擊關閉
+    toast.addEventListener('click', () => {
+      this.removeToast(toast);
+    });
+
+    // 自動移除 (loading toast 不自動移除)
+    if (duration > 0) {
+      setTimeout(() => {
+        this.removeToast(toast);
+      }, duration);
+    }
+
+    return toast;
+  }
+
+  removeToast(toast) {
+    if (toast && toast.parentNode) {
+      toast.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }
+  }
+
+  showLoading(message) {
+    return this.show(message, 'loading', 0);
+  }
+
+  showSuccess(message, duration = 3000) {
+    return this.show(message, 'success', duration);
+  }
+
+  showError(message, duration = 5000) {
+    return this.show(message, 'error', duration);
+  }
+
+  showWarning(message, duration = 4000) {
+    return this.show(message, 'warning', duration);
+  }
+
+  clearAll() {
+    if (this.container) {
+      this.container.innerHTML = '';
+    }
+  }
+}
+
+// 全局 Toast 實例
+const toast = new ToastNotification();
+
+// 配置檢查工具類
+class ConfigChecker {
+  static async checkAllConfigs() {
+    try {
+      // 通過 background script 獲取所有配置
+      const response = await chrome.runtime.sendMessage({ 
+        action: 'getConfig',
+        keys: ['notionToken', 'databaseId', 'enableAI', 'aiConfigs', 'aiProvider']
+      });
+      
+      if (response && response.success) {
+        const config = response.data;
+        const aiConfigs = config.aiConfigs || {};
+        const currentProvider = config.aiProvider || 'openai';
+        const providerConfig = aiConfigs[currentProvider] || {};
+        
+        // 詳細調試日誌
+        console.log('🔧 Raw config data:', config);
+        console.log('🤖 AI configs:', aiConfigs);
+        console.log('📋 Current provider:', currentProvider);
+        console.log('⚙️ Provider config:', providerConfig);
+        console.log('🔑 API Key exists:', !!providerConfig.apiKey);
+        console.log('🎯 Model exists:', !!providerConfig.selectedModel);
+        console.log('✅ Enable AI:', !!config.enableAI);
+        
+        const finalConfigs = {
+          // Notion 配置
+          isNotionConfigured: !!(config.notionToken && config.databaseId),
+          notionToken: config.notionToken,
+          databaseId: config.databaseId,
+          
+          // AI 配置
+          enableAI: config.enableAI || false,
+          aiProvider: currentProvider,
+          aiApiKey: providerConfig.apiKey,
+          aiModel: providerConfig.selectedModel, // 修正：使用 selectedModel 而不是 model
+          isAIConfigured: config.enableAI && providerConfig.apiKey && providerConfig.selectedModel
+        };
+        
+        console.log('📊 Final configs:', finalConfigs);
+        
+        return finalConfigs;
+      } else {
+        console.error('Failed to get config:', response?.error);
+        return { isNotionConfigured: false, enableAI: false };
+      }
+    } catch (error) {
+      console.error('Error checking configs:', error);
+      return { isNotionConfigured: false, enableAI: false };
+    }
+  }
+  
+  // 保持向後兼容性
+  static async checkNotionConfig() {
+    const configs = await this.checkAllConfigs();
+    return {
+      isConfigured: configs.isNotionConfigured,
+      notionToken: configs.notionToken,
+      databaseId: configs.databaseId
+    };
+  }
+
+  static async openPopupIfNeeded() {
+    try {
+      const response = await chrome.runtime.sendMessage({ action: 'openPopup' });
+      return response;
+    } catch (error) {
+      console.error('Error opening popup:', error);
+      // 如果無法打開 popup，顯示提示
+      toast.showWarning('無法打開設定視窗，請點擊瀏覽器工具列中的擴展圖標進行設定', 5000);
+      return null;
+    }
+  }
+}
 
 // 拖動處理器類別
 class DragHandler {
@@ -1170,13 +1394,20 @@ class DragHandler {
 
   async loadPosition() {
     try {
-      const result = await chrome.storage.local.get(['buttonPosition']);
-      const savedPosition = result.buttonPosition;
+      const response = await chrome.runtime.sendMessage({
+        action: 'getLocalStorage',
+        keys: ['buttonPosition']
+      });
       
-      if (savedPosition) {
-        // 確保位置在螢幕範圍內
-        const boundedPosition = this.constrainToViewport(savedPosition.x, savedPosition.y);
-        this.setElementPosition(boundedPosition.x, boundedPosition.y);
+      if (response && response.success) {
+        const savedPosition = response.data.buttonPosition;
+        if (savedPosition) {
+          // 確保位置在螢幕範圍內
+          const boundedPosition = this.constrainToViewport(savedPosition.x, savedPosition.y);
+          this.setElementPosition(boundedPosition.x, boundedPosition.y);
+        }
+      } else {
+        throw new Error(response?.error || 'Failed to get local storage');
       }
     } catch (error) {
       console.log('Failed to load button position:', error);
@@ -1187,9 +1418,14 @@ class DragHandler {
 
   async savePosition(x, y) {
     try {
-      await chrome.storage.local.set({
-        buttonPosition: { x, y, timestamp: Date.now() }
+      const response = await chrome.runtime.sendMessage({
+        action: 'setLocalStorage',
+        data: { buttonPosition: { x, y, timestamp: Date.now() } }
       });
+      
+      if (!response || !response.success) {
+        throw new Error(response?.error || 'Failed to save position');
+      }
     } catch (error) {
       console.log('Failed to save button position:', error);
     }
@@ -1500,14 +1736,161 @@ async function initScraper() {
     });
     
     // 點擊事件（僅在未顯著移動時觸發）
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       if (!dragHandler.hasMovedSignificantly) {
-        chrome.runtime.sendMessage({ action: 'openPopup' });
+        console.log('🔄 Floating button clicked, starting scrape and upload...');
+        await scrapeAndUploadJob();
       }
     });
     
     document.body.appendChild(button);
     console.log('✅ Universal scraper button initialized for', siteConfig.name);
+  }
+}
+
+// 完整的抓取和上傳功能
+async function scrapeAndUploadJob() {
+  // 檢查是否有操作在進行中
+  if (!scrapingStateManager.canStartNewScraping()) {
+    toast.showWarning('已有抓取操作在進行中，請稍候...', 3000);
+    return;
+  }
+
+  // 開始操作
+  if (!scrapingStateManager.startScraping()) {
+    return;
+  }
+
+  let loadingToast = null;
+
+  try {
+    // 檢查所有配置（Notion + AI）
+    loadingToast = toast.showLoading('檢查配置中...');
+    const configs = await ConfigChecker.checkAllConfigs();
+    
+    if (!configs.isNotionConfigured) {
+      toast.removeToast(loadingToast);
+      toast.showWarning('請先設定 Notion Token 和 Database ID', 4000);
+      
+      // 自動打開 popup
+      await ConfigChecker.openPopupIfNeeded();
+      return;
+    }
+
+    // 檢查是否在支援的職缺頁面
+    const currentSite = SiteDetector.getCurrentSite();
+    if (currentSite === 'unknown') {
+      toast.removeToast(loadingToast);
+      toast.showError('不支援的求職網站', 3000);
+      return;
+    }
+
+    if (!SiteDetector.isJobPage()) {
+      toast.removeToast(loadingToast);
+      toast.showError('請在職缺頁面使用此功能', 3000);
+      return;
+    }
+
+    // 開始抓取
+    toast.removeToast(loadingToast);
+    loadingToast = toast.showLoading('正在抓取職缺資料...');
+
+    const scraper = JobScraperFactory.createScraper(currentSite);
+    if (!scraper) {
+      throw new Error(`不支援 ${currentSite} 網站的抓取功能`);
+    }
+
+    let jobData = await scraper.scrapeJob();
+    if (!jobData) {
+      throw new Error('無法提取職缺資訊');
+    }
+
+    console.log('🔍 原始抓取資料:', jobData);
+
+    // 根據 AI 開關決定是否使用 AI 分析
+    console.log('🔍 AI 檢查條件:');
+    console.log('  enableAI:', configs.enableAI);
+    console.log('  isAIConfigured:', configs.isAIConfigured);
+    console.log('  aiProvider:', configs.aiProvider);
+    console.log('  aiApiKey:', configs.aiApiKey ? '***已設定***' : '未設定');
+    console.log('  aiModel:', configs.aiModel);
+    
+    if (configs.enableAI && configs.isAIConfigured) {
+      console.log('✅ 滿足 AI 分析條件，開始 AI 分析...');
+      toast.removeToast(loadingToast);
+      loadingToast = toast.showLoading('正在使用 AI 分析職缺資料...');
+      
+      try {
+        const aiResponse = await chrome.runtime.sendMessage({
+          action: 'analyzeWithAI',
+          jobData: jobData,
+          aiConfig: {
+            aiProvider: configs.aiProvider,
+            aiApiKey: configs.aiApiKey,
+            aiModel: configs.aiModel
+          }
+        });
+
+        if (aiResponse && aiResponse.success) {
+          jobData = aiResponse.result;
+          console.log('🤖 AI 分析完成:', jobData);
+          toast.removeToast(loadingToast);
+          loadingToast = toast.showLoading('AI 分析完成，正在上傳到 Notion...');
+        } else {
+          throw new Error(aiResponse?.error || 'AI 分析失敗');
+        }
+      } catch (aiError) {
+        console.error('AI 分析失敗:', aiError);
+        toast.removeToast(loadingToast);
+        loadingToast = toast.showLoading('AI 分析失敗，使用原始資料上傳...');
+        // 繼續使用原始資料，不中斷流程
+      }
+    } else {
+      if (configs.enableAI && !configs.isAIConfigured) {
+        toast.removeToast(loadingToast);
+        loadingToast = toast.showLoading('AI 已啟用但未完成設定，使用原始資料上傳...');
+      } else {
+        toast.removeToast(loadingToast);
+        loadingToast = toast.showLoading('正在上傳到 Notion...');
+      }
+    }
+
+    // 上傳到 Notion
+    const uploadResponse = await chrome.runtime.sendMessage({
+      action: 'uploadToNotion',
+      jobData: jobData,
+      config: {
+        notionToken: configs.notionToken,
+        databaseId: configs.databaseId
+      }
+    });
+
+    if (uploadResponse && uploadResponse.success) {
+      toast.removeToast(loadingToast);
+      
+      // 根據是否使用了 AI 分析顯示不同的成功消息
+      let successMessage;
+      if (configs.enableAI && configs.isAIConfigured && jobData.aiProcessed) {
+        successMessage = `✅ 職缺已成功分析並儲存到 Notion！\n職位: ${jobData.title}\n公司: ${jobData.company}`;
+      } else if (configs.enableAI) {
+        successMessage = `✅ 職缺已儲存到 Notion（未使用 AI 分析）\n職位: ${jobData.title}\n公司: ${jobData.company}`;
+      } else {
+        successMessage = `✅ 成功儲存到 Notion！\n職位: ${jobData.title}\n公司: ${jobData.company}`;
+      }
+      
+      toast.showSuccess(successMessage, 4000);
+    } else {
+      throw new Error(uploadResponse?.error || '上傳到 Notion 失敗');
+    }
+
+  } catch (error) {
+    if (loadingToast) {
+      toast.removeToast(loadingToast);
+    }
+    console.error('Scrape and upload error:', error);
+    toast.showError(`❌ 操作失敗: ${error.message}`, 5000);
+  } finally {
+    scrapingStateManager.finishScraping();
   }
 }
 

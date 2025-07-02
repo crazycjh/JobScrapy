@@ -306,6 +306,34 @@
     .language-toggle:active {
       transform: scale(0.95);
     }
+    
+    /* 幫助鏈接按鈕樣式 */
+    .help-link-btn {
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #6b7280;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      min-width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .help-link-btn:hover {
+      background: #e5e7eb;
+      color: #374151;
+      transform: scale(1.05);
+    }
+    
+    .help-link-btn:active {
+      transform: scale(0.95);
+    }
   </style>
 </head>
 <body>
@@ -344,11 +372,21 @@
     <div class="config-section collapsible-content" id="notionConfig">
       <div class="input-group">
         <label data-i18n="notionTokenLabel">Integration Token:</label>
-        <input type="password" id="notionToken" data-i18n-placeholder="notionTokenPlaceholder" placeholder="secret_...">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="password" id="notionToken" data-i18n-placeholder="notionTokenPlaceholder" placeholder="secret_..." style="flex: 1;">
+          <button type="button" id="getTokenBtn" class="help-link-btn" data-i18n-title="getTokenHelp" title="獲取 Integration Token">
+            🔗
+          </button>
+        </div>
       </div>
       <div class="input-group">
         <label data-i18n="databaseIdLabel">Database ID:</label>
-        <input type="text" id="databaseId" data-i18n-placeholder="databaseIdPlaceholder" placeholder="資料庫 ID">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="text" id="databaseId" data-i18n-placeholder="databaseIdPlaceholder" placeholder="資料庫 ID" style="flex: 1;">
+          <button type="button" id="getDatabaseIdBtn" class="help-link-btn" data-i18n-title="getDatabaseIdHelp" title="如何獲取 Database ID">
+            ℹ️
+          </button>
+        </div>
       </div>
       <button class="btn create-db" id="createDbBtn" data-i18n="createDbBtn">🏗️ 自動建立資料庫</button>
       <button class="btn" id="saveConfig" data-i18n="saveConfigBtn">💾 儲存設定</button>
