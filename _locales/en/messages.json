@@ -65,10 +65,6 @@
     "description": "Database ID input placeholder"
   },
   
-  "createDbBtn": {
-    "message": "🏗️ Auto Create Database",
-    "description": "Create database button"
-  },
   "saveConfigBtn": {
     "message": "💾 Save Configuration",
     "description": "Save configuration button"
@@ -239,5 +235,34 @@
   "getDatabaseIdHelp": {
     "message": "Click to view official tutorial on how to get Database ID",
     "description": "Help text for getting Database ID"
+  },
+  
+  "parentPageLabel": {
+    "message": "Parent Page Selection:",
+    "description": "Label for parent page selection"
+  },
+  "databaseCreationLabel": {
+    "message": "Database Creation:",
+    "description": "Label for database creation section"
+  },
+  "refreshPagesBtn": {
+    "message": "Refresh Pages",
+    "description": "Refresh pages button text"
+  },
+  "createDbBtn": {
+    "message": "Create Database",
+    "description": "Create database button text"
+  },
+  "loadPagesBtn": {
+    "message": "📥 Load Available Pages",
+    "description": "Load available pages button text"
+  },
+  "loadPagesHelp": {
+    "message": "💡 After entering your Token, click this button to load your Notion pages",
+    "description": "Help text for load pages button"
+  },
+  "newDatabaseNamePlaceholder": {
+    "message": "New database name (optional)",
+    "description": "Placeholder for new database name input"
   }
 }

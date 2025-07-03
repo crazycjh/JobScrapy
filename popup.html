@@ -200,6 +200,7 @@
     }
     
     .collapsible-content.active {
+      max-height: 1000px; /* 足夠大的值來顯示所有內容 */
       padding: 15px;
       background: #f8f9fa;
       border: 1px solid #e5e7eb;
@@ -378,7 +379,48 @@
             🔗
           </button>
         </div>
+        <button type="button" id="loadPagesBtn" class="btn" style="margin-top: 10px; background: #16a34a; font-weight: bold;" data-i18n="loadPagesBtn">
+          📥 載入可用頁面
+        </button>
+        <div style="font-size: 12px; color: #6b7280; margin-top: 5px;" data-i18n="loadPagesHelp">
+          💡 填入 Token 後，點擊此按鈕載入您的 Notion 頁面
+        </div>
       </div>
+      <div class="input-group">
+        <label data-i18n="parentPageLabel">父頁面選擇:</label>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <select id="parentPageSelect" class="form-control" style="flex: 1;">
+            <option value="">請先點擊上方「載入可用頁面」按鈕...</option>
+          </select>
+          <button type="button" id="refreshPagesBtn" class="help-link-btn" title="重新載入頁面">
+            🔄
+          </button>
+        </div>
+      </div>
+
+      <!-- 資料庫選擇區塊 -->
+      <div class="input-group" id="databaseSelectionGroup" style="display: none;">
+        <label>📊 選擇資料庫:</label>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <select id="databaseSelect" class="form-control" style="flex: 1;">
+            <option value="">請先選擇父頁面...</option>
+          </select>
+          <button type="button" id="refreshDatabasesBtn" class="help-link-btn" title="重新載入資料庫">
+            🔄
+          </button>
+        </div>
+        <div id="databaseCompatibilityInfo" style="margin-top: 5px; font-size: 12px; color: #6b7280; display: none;">
+        </div>
+      </div>
+      
+      <div class="input-group">
+        <label data-i18n="databaseCreationLabel">或建立新資料庫:</label>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="text" id="newDatabaseName" placeholder="新資料庫名稱 (可選)" style="flex: 1;">
+          <button type="button" id="createDbBtn" class="btn-small" data-i18n="createDbBtn">建立資料庫</button>
+        </div>
+      </div>
+      
       <div class="input-group">
         <label data-i18n="databaseIdLabel">Database ID:</label>
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -387,8 +429,10 @@
             ℹ️
           </button>
         </div>
+        <div id="databaseNameDisplay" style="margin-top: 5px; font-size: 12px; color: #6b7280; display: none;">
+          <span>📊 資料庫: <span id="databaseNameText"></span></span>
+        </div>
       </div>
-      <button class="btn create-db" id="createDbBtn" data-i18n="createDbBtn">🏗️ 自動建立資料庫</button>
       <button class="btn" id="saveConfig" data-i18n="saveConfigBtn">💾 儲存設定</button>
     </div>
   </div>

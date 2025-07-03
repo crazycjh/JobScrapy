@@ -65,10 +65,6 @@
     "description": "Database ID input placeholder"
   },
   
-  "createDbBtn": {
-    "message": "🏗️ 自動建立資料庫",
-    "description": "Create database button"
-  },
   "saveConfigBtn": {
     "message": "💾 儲存設定",
     "description": "Save configuration button"
@@ -239,5 +235,34 @@
   "getDatabaseIdHelp": {
     "message": "點擊查看如何獲取 Database ID 的官方教學",
     "description": "Help text for getting Database ID"
+  },
+  
+  "parentPageLabel": {
+    "message": "父頁面選擇:",
+    "description": "Label for parent page selection"
+  },
+  "databaseCreationLabel": {
+    "message": "資料庫建立:",
+    "description": "Label for database creation section"
+  },
+  "refreshPagesBtn": {
+    "message": "重新載入頁面",
+    "description": "Refresh pages button text"
+  },
+  "createDbBtn": {
+    "message": "建立資料庫",
+    "description": "Create database button text"
+  },
+  "loadPagesBtn": {
+    "message": "📥 載入可用頁面",
+    "description": "Load available pages button text"
+  },
+  "loadPagesHelp": {
+    "message": "💡 填入 Token 後，點擊此按鈕載入您的 Notion 頁面",
+    "description": "Help text for load pages button"
+  },
+  "newDatabaseNamePlaceholder": {
+    "message": "新資料庫名稱 (可選)",
+    "description": "Placeholder for new database name input"
   }
 }
