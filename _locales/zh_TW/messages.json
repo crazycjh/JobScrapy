@@ -241,8 +241,12 @@
     "message": "父頁面選擇:",
     "description": "Label for parent page selection"
   },
+  "databaseSelectionLabel": {
+    "message": "📊 選擇資料庫:",
+    "description": "Label for database selection"
+  },
   "databaseCreationLabel": {
-    "message": "資料庫建立:",
+    "message": "或建立新資料庫:",
     "description": "Label for database creation section"
   },
   "refreshPagesBtn": {

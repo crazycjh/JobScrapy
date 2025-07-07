@@ -1,7 +1,7 @@
 // content.js - Functional Programming Refactor
 
 // === Debug 控制系統 ===
-const DEBUG_MODE = false; // 生產環境設為 false，開發時設為 true
+const DEBUG_MODE = true; // Set to true for development, false for production
 
 const Logger = {
   // 錯誤訊息 - 永遠顯示
@@ -147,24 +147,23 @@ const toast = (() => {
 
 // --- Configuration Module ---
 
-const configChecker = (() => {
-  const checkAll = async () => {
-    try {
-      // Use a promise-based wrapper for sendMessage to ensure stability
-      const sendMessagePromise = (payload) => {
-        return new Promise((resolve, reject) => {
-          chrome.runtime.sendMessage(payload, (response) => {
-            if (chrome.runtime.lastError) {
-              return reject(chrome.runtime.lastError);
-            }
-            resolve(response);
-          });
-        });
-      };
+const configManager = (() => {
+  let cachedConfig = {
+    isNotionConfigured: false,
+    isAIConfigured: false,
+    enableAI: false,
+  };
 
-      const response = await sendMessagePromise({ 
-        action: 'getConfig',
-        keys: ['notionToken', 'databaseId', 'enableAI', 'aiConfigs', 'aiProvider']
+  const loadConfig = async () => {
+    try {
+      const response = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ 
+          action: 'getConfig',
+          keys: ['notionToken', 'databaseId', 'enableAI', 'aiConfigs', 'aiProvider']
+        }, (res) => {
+          if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
+          else resolve(res);
+        });
       });
 
       if (!response || !response.success) throw new Error(response?.error || 'Failed to get config');
@@ -174,7 +173,7 @@ const configChecker = (() => {
       const currentProvider = config.aiProvider || 'openai';
       const providerConfig = aiConfigs[currentProvider] || {};
 
-      return {
+      cachedConfig = {
         isNotionConfigured: !!(config.notionToken && config.databaseId),
         notionToken: config.notionToken,
         databaseId: config.databaseId,
@@ -184,22 +183,31 @@ const configChecker = (() => {
         aiModel: providerConfig.selectedModel,
         isAIConfigured: config.enableAI && !!providerConfig.apiKey && !!providerConfig.selectedModel,
       };
+      
+      Logger.info('⚙️ 設定已載入並快取:', {
+        notion: cachedConfig.isNotionConfigured,
+        ai: cachedConfig.isAIConfigured
+      });
+
     } catch (error) {
-      console.error('Error checking configs:', error);
-      return { isNotionConfigured: false, isAIConfigured: false, enableAI: false };
+      Logger.error('❌ 載入設定失敗:', error);
+      // 在失敗時重置為預設值，避免使用過期設定
+      cachedConfig = { isNotionConfigured: false, isAIConfigured: false, enableAI: false };
     }
   };
+
+  const getConfig = () => cachedConfig;
 
   const openPopupIfNeeded = async () => {
     try {
       await chrome.runtime.sendMessage({ action: 'openPopup' });
     } catch (error) {
-      console.error('Error opening popup:', error);
+      Logger.error('❌ 無法打開設定視窗:', error);
       toast.showWarning('無法打開設定視窗，請點擊瀏覽器工具列中的擴展圖標進行設定', 5000);
     }
   };
 
-  return { checkAll, openPopupIfNeeded };
+  return { loadConfig, getConfig, openPopupIfNeeded };
 })();
 
 
@@ -422,10 +430,10 @@ const handleScrapeAndUpload = async () => {
   let loadingToast = toast.showLoading('檢查配置中...');
 
   try {
-    const configs = await configChecker.checkAll();
+    const configs = configManager.getConfig();
     if (!configs.isNotionConfigured) {
       toast.showWarning('請先設定 Notion Token 和 Database ID', 4000);
-      await configChecker.openPopupIfNeeded();
+      await configManager.openPopupIfNeeded();
       throw new Error('Notion not configured.');
     }
 
@@ -487,7 +495,10 @@ const handleScrapeAndUpload = async () => {
 const handleMessage = (request, _sender, sendResponse) => {
   if (request.action === 'ping') {
     sendResponse({ success: true, message: 'Universal scraper loaded (Functional)' });
-  } else if (request.action === 'scrapeJob') {
+    return;
+  }
+  
+  if (request.action === 'scrapeJob') {
     const site = getCurrentSite(window.location.hostname);
     const scrape = scraperFactory(site);
     if (scrape) {
@@ -498,10 +509,23 @@ const handleMessage = (request, _sender, sendResponse) => {
     }
     return true; // Indicates async response
   }
+
+  if (request.action === 'configUpdated') {
+    Logger.info('🔄 收到設定更新通知，正在重新載入設定...');
+    toast.show('設定已更新，正在同步...', 'info', 2000);
+    configManager.loadConfig().then(() => {
+      sendResponse({ success: true, message: 'Config reloaded' });
+    });
+    return true; // Indicates async response
+  }
 };
 
-const init = () => {
+const init = async () => {
   Logger.debug('Initializing Universal Job Scraper...');
+  
+  // Initial configuration load
+  await configManager.loadConfig();
+  
   const site = getCurrentSite(window.location.hostname);
   if (site === 'unknown') return;
 

@@ -1284,6 +1284,31 @@ const handleClearOAuthData = async (request, sendResponse) => {
   }
 };
 
+const handleConfigUpdated = (_request, sendResponse) => {
+  Logger.info('📢 接到設定更新通知，正在廣播到所有相關頁面...');
+  chrome.tabs.query({ url: ["http://*/*", "https://*/*"] }, (tabs) => {
+    let notifiedCount = 0;
+    for (const tab of tabs) {
+      if (tab.id && tab.url && isSupportedJobPage(tab.url)) {
+        chrome.tabs.sendMessage(tab.id, { action: 'configUpdated' }, (response) => {
+          // 如果 sendMessage 失敗，chrome.runtime.lastError 會被設置。
+          // 這通常發生在 content script 未被注入的頁面（如 chrome:// pages, file:// urls, etc.）
+          // 我們可以安全地忽略這個錯誤，因為我們只關心那些成功接收訊息的頁面。
+          if (chrome.runtime.lastError) {
+            Logger.debug(`Tab ${tab.id} (${tab.url.substring(0, 30)}...) 無法接收訊息: ${chrome.runtime.lastError.message}`);
+          } else {
+            Logger.debug(`Tab ${tab.id} 已確認收到更新通知。`, response);
+          }
+        });
+        notifiedCount++;
+      }
+    }
+    Logger.info(`📢 嘗試通知 ${notifiedCount} 個相關頁面。`);
+    sendResponse({ success: true, notifiedTabs: notifiedCount });
+  });
+  return true; // 保持消息通道開啟以進行異步回應
+};
+
 const messageHandlers = {
   getConfig: handleGetConfig,
   getLocalStorage: handleGetLocalStorage,
@@ -1300,6 +1325,7 @@ const messageHandlers = {
   refreshOAuthToken: handleRefreshOAuthToken,
   validateOAuthToken: handleValidateOAuthToken,
   clearOAuthData: handleClearOAuthData,
+  configUpdated: handleConfigUpdated,
   openPopup: (_req, sendResponse) => { chrome.action.openPopup(); sendResponse({success: true}); },
 };
 

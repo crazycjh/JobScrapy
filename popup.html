@@ -761,7 +761,6 @@
           <div class="oauth-database-section">
             <label data-i18n="oauthSelectDatabase">📊 選擇資料庫：</label>
             <select id="oauthDatabaseSelect" class="oauth-database-select">
-              <option value="" data-i18n="oauthLoadingDatabases">載入資料庫中...</option>
             </select>
             <div id="oauthDatabaseStatus" class="database-status" style="display: none;"></div>
             
@@ -831,7 +830,7 @@
 
       <!-- 資料庫選擇區塊 -->
       <div class="input-group" id="databaseSelectionGroup" style="display: none;">
-        <label>📊 選擇資料庫:</label>
+        <label data-i18n="databaseSelectionLabel">📊 選擇資料庫:</label>
         <div style="display: flex; align-items: center; gap: 8px;">
           <select id="databaseSelect" class="form-control" style="flex: 1;">
             <option value="">請先選擇父頁面...</option>
@@ -847,7 +846,7 @@
       <div class="input-group">
         <label data-i18n="databaseCreationLabel">或建立新資料庫:</label>
         <div style="display: flex; align-items: center; gap: 8px;">
-          <input type="text" id="newDatabaseName" placeholder="新資料庫名稱 (可選)" style="flex: 1;">
+          <input type="text" id="newDatabaseName" data-i18n-placeholder="newDatabaseNamePlaceholder" placeholder="新資料庫名稱 (可選)" style="flex: 1;">
           <button type="button" id="createDbBtn" class="btn-small" data-i18n="createDbBtn">建立資料庫</button>
         </div>
       </div>

@@ -241,8 +241,12 @@
     "message": "Parent Page Selection:",
     "description": "Label for parent page selection"
   },
+  "databaseSelectionLabel": {
+    "message": "📊 Select Database:",
+    "description": "Label for database selection"
+  },
   "databaseCreationLabel": {
-    "message": "Database Creation:",
+    "message": "Or create new database:",
     "description": "Label for database creation section"
   },
   "refreshPagesBtn": {

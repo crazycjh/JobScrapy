@@ -1,5 +1,4 @@
 // popup.js - Functional Programming Refactor
-
 Logger.info('Popup script loaded (Functional)');
 
 // Import OAuth module
@@ -295,6 +294,9 @@ const oauthManager = {
           Logger.warn('🤷 [Popup] 未知的設定結果模式:', setupResult?.mode);
         }
 
+        // 清除中斷連接標記（如果存在）
+        await configManager.save({ oauthDisconnected: null });
+        
         // 顯示完成狀態
         oauthUI.showAuthorizedState(AppState.config.oauth.workspaceInfo);
         statusManager.showSuccess('🎉 Notion 連接成功！');
@@ -511,6 +513,15 @@ const oauthManager = {
       // 顯示未授權狀態
       oauthUI.showNotAuthorizedState();
 
+      // 持久化登出狀態
+      await configManager.save({
+        authMethod: 'manual',
+        notionOAuthToken: null, // 確保清除 OAuth token
+        databaseId: null, // 中斷連接時也清除 databaseId
+        databaseName: null,
+        oauthDisconnected: true // 標記用戶主動中斷 OAuth 連接
+      });
+
       statusManager.showSuccess('已中斷與 Notion 的連接');
 
     } catch (error) {
@@ -579,6 +590,8 @@ const i18n = {
         oauthNoDatabasesFound: 'No available databases found',
         oauthCreateNewDatabase: '➕ Create New Database',
         oauthDatabaseCompatible: '✅ Fully Compatible',
+        oauthDatabaseGood: '🟢 Good Compatibility',
+        oauthDatabasePerfect: '🟢 Perfect Compatibility',
         oauthDatabasePartial: '⚠️ Partially Compatible',
         oauthDatabaseIncompatible: '❌ Incompatible',
         oauthCreateNewDatabaseLabel: '➕ Or Create New Database:',
@@ -603,12 +616,22 @@ const i18n = {
         // Configuration
         notionConfigTitle: '⚙️ Notion Configuration',
         notionTokenLabel: 'Integration Token:',
+        notionTokenPlaceholder: 'secret_...',
+        getTokenHelp: 'Get Integration Token',
         loadPagesBtn: '📥 Load Available Pages',
         loadPagesHelp: '💡 After entering your Token, click this button to load your Notion pages',
         parentPageLabel: 'Parent Page Selection:',
-        databaseCreationLabel: 'Database Creation:',
+        loadPagesFirst: 'Please click "Load Available Pages" button above...',
+        selectParentFirst: 'Please select a parent page first...',
+        databaseSelectionLabel: '📊 Select Database:',
+        selectExistingDatabase: 'Select existing database...',
+        databaseCreationLabel: 'Or create new database:',
+        newDatabaseNamePlaceholder: 'New database name (optional)',
         createDbBtn: 'Create Database',
         databaseIdLabel: 'Database ID:',
+        databaseIdPlaceholder: 'Database ID',
+        getDatabaseIdHelp: 'How to get Database ID',
+        databaseNameLabel: '📊 Database:',
         saveConfigBtn: '💾 Save Configuration',
         
         // AI Configuration
@@ -649,6 +672,8 @@ const i18n = {
         oauthNoDatabasesFound: '未找到可用的資料庫',
         oauthCreateNewDatabase: '➕ 建立新資料庫',
         oauthDatabaseCompatible: '✅ 完全相容',
+        oauthDatabaseGood: '🟢 相容性良好',
+        oauthDatabasePerfect: '🟢 完美相容',
         oauthDatabasePartial: '⚠️ 部分相容',
         oauthDatabaseIncompatible: '❌ 不相容',
         oauthCreateNewDatabaseLabel: '➕ 或建立新資料庫：',
@@ -673,12 +698,22 @@ const i18n = {
         // Configuration
         notionConfigTitle: '⚙️ Notion 設定',
         notionTokenLabel: 'Integration Token:',
+        notionTokenPlaceholder: 'secret_...',
+        getTokenHelp: '如何獲取 Integration Token',
         loadPagesBtn: '📥 載入可用頁面',
         loadPagesHelp: '💡 填入 Token 後，點擊此按鈕載入您的 Notion 頁面',
         parentPageLabel: '父頁面選擇:',
-        databaseCreationLabel: '資料庫建立:',
+        loadPagesFirst: '請先點擊上方「載入可用頁面」按鈕...',
+        selectParentFirst: '請先選擇父頁面...',
+        databaseSelectionLabel: '📊 選擇資料庫:',
+        selectExistingDatabase: '選擇現有資料庫...',
+        databaseCreationLabel: '或建立新資料庫:',
+        newDatabaseNamePlaceholder: '新資料庫名稱 (可選)',
         createDbBtn: '建立資料庫',
-        databaseIdLabel: 'Database ID:',
+        databaseIdLabel: '資料庫 ID:',
+        databaseIdPlaceholder: '資料庫 ID',
+        getDatabaseIdHelp: '如何獲取 Database ID',
+        databaseNameLabel: '📊 資料庫:',
         saveConfigBtn: '💾 儲存設定',
         
         // AI Configuration
@@ -808,13 +843,14 @@ const notionApi = {
     }
   },
 
-  createDatabase: async (token, parentPageId, databaseName = '求職追蹤資料庫', language = 'zh_TW') => {
+  createDatabase: async (token, parentPageId, databaseName, language = 'zh_TW') => {
+    const finalDatabaseName = databaseName || i18n.getMessage('oauthDatabaseNameDefault');
     try {
       const response = await chrome.runtime.sendMessage({
         action: 'createNotionDatabase',
         token,
         parentPageId,
-        databaseName,
+        databaseName: finalDatabaseName,
         language
       });
       return response;
@@ -962,13 +998,13 @@ const notionApi = {
     select.innerHTML = '';
     
     if (databases.length === 0) {
-      select.innerHTML = '<option value="">未找到相容的資料庫</option>';
+      select.innerHTML = `<option value="">${i18n.getMessage('oauthNoDatabasesFound')}</option>`;
       dom.hide('databaseCompatibilityInfo');
       return;
     }
 
-    select.innerHTML = '<option value="">選擇現有資料庫...</option>';
-    
+    select.innerHTML = `<option value="">${i18n.getMessage('selectExistingDatabase')}</option>`;
+  
     databases.forEach(db => {
       const option = document.createElement('option');
       option.value = db.id;
@@ -999,11 +1035,11 @@ const notionApi = {
 
     const compatibility = database.compatibility;
     const levelText = {
-      perfect: '完美相容',
-      good: '良好相容',
-      partial: '部分相容',
-      poor: '相容性較差'
-    }[compatibility.level] || '未知';
+      perfect: i18n.getMessage('oauthDatabasePerfect'),
+      good: i18n.getMessage('oauthDatabaseGood'),
+      partial: i18n.getMessage('oauthDatabasePartial'),
+      poor: i18n.getMessage('oauthDatabaseIncompatible')
+    }[compatibility.level] || i18n.getMessage('unknown');
 
     const levelColor = {
       perfect: '#059669',
@@ -1069,6 +1105,16 @@ const eventHandlers = {
       
       statusManager.showSuccess(i18n.getMessage('configSaved'));
       Logger.info('✅ [Popup] 完整配置已儲存，暫時狀態已持久化');
+
+      // 發送設定更新通知
+      chrome.runtime.sendMessage({ action: 'configUpdated' }, (response) => {
+        if (chrome.runtime.lastError) {
+          Logger.warn('發送 configUpdated 訊息失敗:', chrome.runtime.lastError.message);
+        } else {
+          Logger.info('📢 設定更新通知已發送', response);
+        }
+      });
+
     } else {
       statusManager.showError(`儲存失敗: ${result.error}`);
     }
@@ -1327,7 +1373,7 @@ const eventHandlers = {
   createDatabase: async () => {
     const token = dom.get('notionToken')?.value;
     const parentPageId = dom.get('parentPageSelect')?.value;
-    const databaseName = dom.get('newDatabaseName')?.value || '求職追蹤資料庫';
+    const databaseName = dom.get('newDatabaseName')?.value;
 
     if (!token) {
       statusManager.showError('請先填入 Notion Token');
@@ -3053,7 +3099,7 @@ const initializeApp = async () => {
 
   // Load configuration
   const configResult = await configManager.load([
-    'notionToken', 'databaseId', 'databaseName', 'aiProvider', 'aiConfigs', 'enableAI', 'preferredLanguage', 'selectedParentPageId', 'cachedNotionPages', 'authMethod'
+    'notionToken', 'databaseId', 'databaseName', 'aiProvider', 'aiConfigs', 'enableAI', 'preferredLanguage', 'selectedParentPageId', 'cachedNotionPages', 'authMethod', 'lastOAuthTime', 'oauthDisconnected'
   ]);
 
   if (configResult.success) {
@@ -3090,13 +3136,13 @@ const initializeApp = async () => {
       if (config.databaseName) {
         oauthUI.updateDatabaseName(config.databaseName);
       }
-    } else if (authStatus.isAuthorized && authStatus.authMethod === 'manual') {
-      // 使用手動 Token，隱藏 OAuth 區塊，顯示手動設定
-      Logger.debug('ℹ️ 使用手動 Token，隱藏 OAuth 區塊');
+    } else if (authStatus.isAuthorized && authStatus.authMethod === 'manual' && !config.oauthDisconnected) {
+      // 使用手動 Token 且未主動中斷 OAuth，隱藏 OAuth 區塊，顯示手動設定
+      Logger.debug('ℹ️ 使用手動 Token（純手動模式），隱藏 OAuth 區塊');
       oauthUI.hideOAuthSection();
     } else {
-      // 未授權，顯示 OAuth 連接選項
-      Logger.debug('🔗 未授權，顯示 OAuth 連接選項');
+      // 未授權或曾經使用過 OAuth，顯示 OAuth 連接選項
+      Logger.debug('🔗 顯示 OAuth 連接選項');
       oauthUI.showNotAuthorizedState();
     }
 
