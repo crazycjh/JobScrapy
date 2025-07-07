@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extensionName__",
-  "version": "1.0",
+  "version": "2.0",
   "description": "__MSG_extensionDescription__",
   "default_locale": "zh_TW",
-  "permissions": ["activeTab", "tabs", "storage", "scripting", "notifications"],
+  "permissions": ["activeTab", "tabs", "storage", "scripting", "notifications", "identity"],
   "host_permissions": [
     "https://www.linkedin.com/*",
     "https://www.104.com.tw/*",
@@ -15,6 +15,10 @@
     "https://api.openai.com/*",
     "https://openrouter.ai/*"
   ],
+  "oauth2": {
+    "client_id": "227d872b-594c-8021-9e85-0037be70f419",
+    "scopes": ["read", "write"]
+  },
   "icons": {
     "16": "icon-16.png",
     "32": "icon-32.png",

@@ -264,5 +264,175 @@
   "newDatabaseNamePlaceholder": {
     "message": "New database name (optional)",
     "description": "Placeholder for new database name input"
+  },
+  
+  "statusScrapingData": {
+    "message": "Scraping data...",
+    "description": "Status when scraping data"
+  },
+  "errorNotLinkedInJobPage": {
+    "message": "Please use this feature on a LinkedIn job page",
+    "description": "Error when not on LinkedIn job page"
+  },
+  "languageSwitchedTo": {
+    "message": "Language switched to",
+    "description": "Language switched to message"
+  },
+  
+  "oauthConnectNotion": {
+    "message": "🔗 Connect Your Notion Account",
+    "description": "OAuth connect Notion title"
+  },
+  "oauthSelectWorkspace": {
+    "message": "On the next authorization page, we recommend:",
+    "description": "OAuth workspace selection guidance"
+  },
+  "oauthSelectEntireWorkspace": {
+    "message": "✅ Select \"entire workspace\" (most convenient)",
+    "description": "OAuth select entire workspace option"
+  },
+  "oauthSelectSpecificPage": {
+    "message": "✅ Or select a specific page where you want to store jobs",
+    "description": "OAuth select specific page option"
+  },
+  "oauthConnectButton": {
+    "message": "🔗 Connect Notion to Get Started",
+    "description": "OAuth connect button text"
+  },
+  "oauthAuthorizing": {
+    "message": "🔄 Connecting to Notion...",
+    "description": "OAuth authorizing status"
+  },
+  "oauthAuthorizingDescription": {
+    "message": "Please complete authorization in the popup Notion page",
+    "description": "OAuth authorizing description"
+  },
+  "oauthSettingUp": {
+    "message": "⏳ Automatically setting up database...",
+    "description": "OAuth setting up status"
+  },
+  "oauthConnected": {
+    "message": "✅ Connected to",
+    "description": "OAuth connected status"
+  },
+  "oauthDatabase": {
+    "message": "Database:",
+    "description": "OAuth database label"
+  },
+  "oauthAutoSelect": {
+    "message": "Auto-selected",
+    "description": "OAuth auto select database"
+  },
+  "oauthDisconnect": {
+    "message": "🔓 Disconnect",
+    "description": "OAuth disconnect button"
+  },
+  "oauthStepConnected": {
+    "message": "✅ Connected to Notion",
+    "description": "OAuth step: connected"
+  },
+  "oauthStepComplete": {
+    "message": "⏳ Ready to complete",
+    "description": "OAuth step: complete"
+  },
+  "oauthSelectDatabase": {
+    "message": "📊 Select Database:",
+    "description": "OAuth select database label"
+  },
+  "oauthLoadingDatabases": {
+    "message": "Loading databases...",
+    "description": "OAuth loading databases option"
+  },
+  "oauthNoDatabasesFound": {
+    "message": "No available databases found",
+    "description": "OAuth no databases found message"
+  },
+  "oauthCreateNewDatabase": {
+    "message": "➕ Create New Database",
+    "description": "OAuth create new database button"
+  },
+  "oauthDatabaseCompatible": {
+    "message": "✅ Fully Compatible",
+    "description": "OAuth database fully compatible status"
+  },
+  "oauthDatabasePartial": {
+    "message": "⚠️ Partially Compatible",
+    "description": "OAuth database partially compatible status"
+  },
+  "oauthDatabaseIncompatible": {
+    "message": "❌ Incompatible",
+    "description": "OAuth database incompatible status"
+  },
+  "oauthCreateNewDatabaseLabel": {
+    "message": "➕ Or Create New Database:",
+    "description": "OAuth create new database label"
+  },
+  "oauthDatabaseNamePlaceholder": {
+    "message": "Database name (optional)",
+    "description": "OAuth database name input placeholder"
+  },
+  "oauthCreateNewDatabaseBtn": {
+    "message": "➕ Create",
+    "description": "OAuth create new database button text"
+  },
+  "oauthCreateDatabaseHelp": {
+    "message": "💡 Default name will be used if left empty",
+    "description": "OAuth create database help text"
+  },
+  "oauthParentPage": {
+    "message": "Parent Page:",
+    "description": "OAuth parent page label"
+  },
+  "oauthParentPageWorkspace": {
+    "message": "Workspace",
+    "description": "OAuth parent page workspace type"
+  },
+  "oauthParentPageSubpage": {
+    "message": "Subpage",
+    "description": "OAuth parent page subpage type"
+  },
+  "oauthConfirmCreateDatabase": {
+    "message": "No compatible databases found. Would you like to create a new job tracking database?",
+    "description": "OAuth confirm create database message"
+  },
+  "oauthConfirmCreateDatabaseTitle": {
+    "message": "Create Database Confirmation",
+    "description": "OAuth confirm create database dialog title"
+  },
+  "oauthConfirmYes": {
+    "message": "Create Database",
+    "description": "OAuth confirm yes button"
+  },
+  "oauthConfirmNo": {
+    "message": "Cancel",
+    "description": "OAuth confirm no button"
+  },
+  "oauthConfirmAutoCreate": {
+    "message": "Auto Create",
+    "description": "OAuth confirm auto create button"
+  },
+  "oauthConfirmCustomName": {
+    "message": "Custom Name",
+    "description": "OAuth confirm custom name button"
+  },
+  "oauthDatabaseNamePrompt": {
+    "message": "Please enter database name:",
+    "description": "OAuth database name input prompt"
+  },
+  "oauthDatabaseNameDefault": {
+    "message": "Job Tracking Database",
+    "description": "OAuth default database name"
+  },
+  "oauthSetupComplete": {
+    "message": "OAuth setup complete, continue with detailed configuration",
+    "description": "OAuth setup complete message"
+  },
+  "oauthNewDatabaseCreated": {
+    "message": "New database created for you, please confirm settings",
+    "description": "New database created message"
+  },
+  "oauthSelectExistingDatabase": {
+    "message": "Please select the database you want to use below",
+    "description": "Select existing database message"
   }
 }

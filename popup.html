@@ -335,6 +335,344 @@
     .help-link-btn:active {
       transform: scale(0.95);
     }
+
+    /* OAuth 授權區塊樣式 */
+    .oauth-section {
+      margin-bottom: 20px;
+    }
+
+    .oauth-status-card {
+      background: #ffffff;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .auth-state {
+      padding: 20px;
+    }
+
+    .auth-guide {
+      text-align: center;
+    }
+
+    .auth-guide h3 {
+      margin-bottom: 15px;
+      color: #1f2937;
+      font-size: 18px;
+    }
+
+    .auth-guide ul {
+      text-align: left;
+      margin: 15px 0;
+      color: #6b7280;
+      padding-left: 20px;
+    }
+
+    .auth-guide li {
+      margin-bottom: 8px;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+      transform: translateY(-2px);
+    }
+
+    .oauth-btn {
+      width: 100%;
+      margin-top: 15px;
+    }
+
+    /* 授權中狀態 */
+    .authorizing-status {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f4f6;
+      border-top: 4px solid #2563eb;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .authorizing-status h3 {
+      margin-bottom: 10px;
+      color: #1f2937;
+    }
+
+    .authorizing-status p {
+      color: #6b7280;
+      margin: 0;
+    }
+
+    /* 設定中狀態 */
+    .setup-status {
+      padding: 10px;
+    }
+
+    .progress-indicator {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .step {
+      padding: 12px 15px;
+      border-radius: 8px;
+      background: #f3f4f6;
+      color: #6b7280;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .step.completed {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .step.active {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    /* 已授權狀態 */
+    .workspace-info {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      padding: 15px;
+      background: #f0f9ff;
+      border-radius: 8px;
+      border: 1px solid #0ea5e9;
+    }
+
+    .workspace-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .workspace-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .workspace-details {
+      flex: 1;
+    }
+
+    .workspace-details h3 {
+      margin: 0 0 5px 0;
+      color: #0c4a6e;
+      font-size: 16px;
+    }
+
+    .workspace-details p {
+      margin: 0;
+      color: #075985;
+      font-size: 14px;
+    }
+
+    .btn-small {
+      padding: 8px 12px;
+      font-size: 12px;
+      min-width: auto;
+    }
+
+    .btn-secondary {
+      background: #6b7280;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #4b5563;
+    }
+
+    /* OAuth 資料庫選擇樣式 */
+    .oauth-database-section {
+      margin-top: 10px;
+    }
+
+    .oauth-database-select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      background: white;
+      margin-bottom: 8px;
+    }
+
+    .database-status {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .database-status.compatible {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .database-status.partial {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .database-status.none {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .oauth-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* OAuth 建立資料庫區塊樣式 */
+    .oauth-create-db-section {
+      margin-top: 15px;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+
+    .oauth-create-db-section label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #374151;
+      font-size: 14px;
+    }
+
+    .oauth-create-db-inputs {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .oauth-database-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      background: white;
+    }
+
+    .oauth-database-input::placeholder {
+      color: #9ca3af;
+    }
+
+    .btn-create-db {
+      padding: 8px 16px;
+      background: #059669;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-create-db:hover {
+      background: #047857;
+      transform: translateY(-1px);
+    }
+
+    .btn-create-db:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .oauth-create-db-help {
+      font-size: 12px;
+      color: #6b7280;
+      font-style: italic;
+    }
+
+    /* OAuth 父頁面資訊顯示樣式 */
+    .oauth-parent-page-info {
+      margin: 12px 0;
+      padding: 10px 12px;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 6px;
+    }
+
+    .parent-page-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .parent-page-icon {
+      font-size: 16px;
+      color: #0369a1;
+    }
+
+    .parent-page-details {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .parent-page-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0c4a6e;
+    }
+
+    .parent-page-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #1e40af;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .parent-page-type {
+      font-size: 12px;
+      font-weight: 400;
+      color: #64748b;
+      background: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
@@ -363,6 +701,99 @@
   </div>
 
   <div class="divider"></div>
+
+  <!-- OAuth 授權區塊 -->
+  <div id="oauthSection" class="oauth-section" style="display: none;">
+    <div class="oauth-status-card">
+      <div id="notAuthorizedState" class="auth-state">
+        <div class="auth-guide">
+          <h3 data-i18n="oauthConnectNotion">🔗 連接您的 Notion 帳號</h3>
+          <p data-i18n="oauthSelectWorkspace">在下一步的授權頁面，建議您：</p>
+          <ul>
+            <li data-i18n="oauthSelectEntireWorkspace">✅ 選擇「整個 workspace」（最方便）</li>
+            <li data-i18n="oauthSelectSpecificPage">✅ 或選擇您想存放職缺的特定頁面</li>
+          </ul>
+          <button id="connectNotionBtn" class="btn btn-primary oauth-btn" data-i18n="oauthConnectButton">
+            🔗 連接 Notion 開始使用
+          </button>
+        </div>
+      </div>
+
+      <div id="authorizingState" class="auth-state" style="display: none;">
+        <div class="authorizing-status">
+          <div class="spinner"></div>
+          <h3 data-i18n="oauthAuthorizing">🔄 正在連接 Notion...</h3>
+          <p data-i18n="oauthAuthorizingDescription">請在彈出的 Notion 頁面完成授權</p>
+        </div>
+      </div>
+
+      <div id="settingUpState" class="auth-state" style="display: none;">
+        <div class="setup-status">
+          <div class="progress-indicator">
+            <div class="step completed" data-i18n="oauthStepConnected">✅ 已連接 Notion</div>
+            <div class="step active" data-i18n="oauthSettingUp">⏳ 正在自動設定資料庫...</div>
+            <div class="step" data-i18n="oauthStepComplete">⏳ 準備完成</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="authorizedState" class="auth-state" style="display: none;">
+        <div class="workspace-info">
+          <div class="workspace-header">
+            <img id="workspaceIcon" src="" alt="Workspace Icon" class="workspace-icon" style="display: none;">
+            <div class="workspace-details">
+              <h3><span data-i18n="oauthConnected">✅ 已連接到</span> <span id="workspaceName">Notion</span></h3>
+            </div>
+          </div>
+          
+          <!-- 父頁面資訊顯示區塊 -->
+          <div id="oauthParentPageInfo" class="oauth-parent-page-info" style="display: none;">
+            <div class="parent-page-header">
+              <span class="parent-page-icon">📄</span>
+              <div class="parent-page-details">
+                <span class="parent-page-label" data-i18n="oauthParentPage">父頁面：</span>
+                <span id="parentPageName" class="parent-page-name">未知頁面</span>
+                <span id="parentPageType" class="parent-page-type"></span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="oauth-database-section">
+            <label data-i18n="oauthSelectDatabase">📊 選擇資料庫：</label>
+            <select id="oauthDatabaseSelect" class="oauth-database-select">
+              <option value="" data-i18n="oauthLoadingDatabases">載入資料庫中...</option>
+            </select>
+            <div id="oauthDatabaseStatus" class="database-status" style="display: none;"></div>
+            
+            <!-- 建立新資料庫區塊 - 始終顯示 -->
+            <div id="oauthCreateDatabaseSection" class="oauth-create-db-section">
+              <label data-i18n="oauthCreateNewDatabaseLabel">➕ 或建立新資料庫：</label>
+              <div class="oauth-create-db-inputs">
+                <input type="text" id="oauthNewDatabaseName" class="oauth-database-input" data-i18n-placeholder="oauthDatabaseNamePlaceholder" placeholder="資料庫名稱 (選填)">
+                <button id="oauthCreateDbBtn" class="btn-create-db" data-i18n="oauthCreateNewDatabaseBtn">
+                  ➕ 建立
+                </button>
+              </div>
+              <div class="oauth-create-db-help" data-i18n="oauthCreateDatabaseHelp">
+                💡 不填寫名稱將使用預設名稱
+              </div>
+            </div>
+            
+            <!-- 無資料庫時的訊息 -->
+            <div id="oauthNoDatabases" style="display: none;">
+              <p style="color: #6b7280; font-size: 14px; margin: 8px 0;" data-i18n="oauthNoDatabasesFound">未找到可用的資料庫</p>
+            </div>
+          </div>
+          
+          <div class="oauth-actions">
+            <button id="disconnectBtn" class="btn btn-secondary btn-small" data-i18n="oauthDisconnect">
+              🔓 中斷連接
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- 可折疊的設定區塊 -->
   <div class="collapsible-section">
@@ -480,6 +911,8 @@
   <div id="status"></div>
   <div id="preview"></div>
 
+  <script src="logger.js"></script>
+  <script src="notionOAuth.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

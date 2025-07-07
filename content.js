@@ -1,5 +1,30 @@
 // content.js - Functional Programming Refactor
-console.log('Universal Job Scraper content script loaded (Functional)');
+
+// === Debug 控制系統 ===
+const DEBUG_MODE = false; // 生產環境設為 false，開發時設為 true
+
+const Logger = {
+  // 錯誤訊息 - 永遠顯示
+  error: (...args) => console.error(...args),
+  
+  // 警告訊息 - 永遠顯示  
+  warn: (...args) => console.warn(...args),
+  
+  // 重要訊息 - 永遠顯示
+  info: (...args) => console.log(...args),
+  
+  // 調試訊息 - 只在 DEBUG_MODE 時顯示
+  debug: (...args) => {
+    if (DEBUG_MODE) console.log(...args);
+  },
+  
+  // 詳細調試 - 只在 DEBUG_MODE 時顯示
+  verbose: (...args) => {
+    if (DEBUG_MODE) console.log(...args);
+  }
+};
+
+Logger.info('Universal Job Scraper content script loaded (Functional)');
 
 // --- Pure Helper Functions ---
 
@@ -23,7 +48,7 @@ const isJobPage = (site, url, pathname) => {
     cakeresume: /\/jobs\//
   };
   const isMatch = patterns[site]?.test(url) || patterns[site]?.test(pathname);
-  console.log(`🔍 Site: ${site}, URL: ${url}, Is Job Page: ${isMatch}`);
+  Logger.debug(`🔍 Site: ${site}, URL: ${url}, Is Job Page: ${isMatch}`);
   return isMatch || false;
 };
 
@@ -239,7 +264,7 @@ const getLinkedInBenefits = (description) => {
 };
 
 const scrapeLinkedIn = async () => {
-  console.log('🔍 LinkedIn: Starting job scraping (functional)...');
+  Logger.debug('🔍 LinkedIn: Starting job scraping (functional)...');
   const description = getLinkedInDescription();
   
   const jobData = {
@@ -380,7 +405,7 @@ const makeDraggable = (element) => {
         element.style.top = `${Math.max(0, Math.min(window.innerHeight - element.offsetHeight, y))}px`;
         element.style.right = 'auto';
       }
-    }).catch(e => console.log('Could not load button position', e));
+    }).catch(e => Logger.debug('Could not load button position', e));
 };
 
 
@@ -439,7 +464,8 @@ const handleScrapeAndUpload = async () => {
     const uploadResponse = await chrome.runtime.sendMessage({
       action: 'uploadToNotion',
       jobData,
-      config: { notionToken: configs.notionToken, databaseId: configs.databaseId }
+      config: { notionToken: configs.notionToken, databaseId: configs.databaseId },
+      language: 'zh_TW' // content.js 預設使用中文
     });
 
     if (!uploadResponse?.success) throw new Error(uploadResponse?.error || '上傳到 Notion 失敗');
@@ -475,7 +501,7 @@ const handleMessage = (request, _sender, sendResponse) => {
 };
 
 const init = () => {
-  console.log('Initializing Universal Job Scraper...');
+  Logger.debug('Initializing Universal Job Scraper...');
   const site = getCurrentSite(window.location.hostname);
   if (site === 'unknown') return;
 

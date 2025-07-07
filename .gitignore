@@ -1,0 +1,11 @@
+# Sensitive information
+env.js
+
+# macOS specific
+.DS_Store
+
+# Archives
+*.zip
+
+# Uploads
+uploads/

@@ -264,5 +264,175 @@
   "newDatabaseNamePlaceholder": {
     "message": "新資料庫名稱 (可選)",
     "description": "Placeholder for new database name input"
+  },
+  
+  "statusScrapingData": {
+    "message": "抓取資料中...",
+    "description": "Status when scraping data"
+  },
+  "errorNotLinkedInJobPage": {
+    "message": "請在 LinkedIn 職缺頁面使用此功能",
+    "description": "Error when not on LinkedIn job page"
+  },
+  "languageSwitchedTo": {
+    "message": "語言已切換到",
+    "description": "Language switched to message"
+  },
+  
+  "oauthConnectNotion": {
+    "message": "🔗 連接您的 Notion 帳號",
+    "description": "OAuth connect Notion title"
+  },
+  "oauthSelectWorkspace": {
+    "message": "在下一步的授權頁面，建議您：",
+    "description": "OAuth workspace selection guidance"
+  },
+  "oauthSelectEntireWorkspace": {
+    "message": "✅ 選擇「整個 workspace」（最方便）",
+    "description": "OAuth select entire workspace option"
+  },
+  "oauthSelectSpecificPage": {
+    "message": "✅ 或選擇您想存放職缺的特定頁面",
+    "description": "OAuth select specific page option"
+  },
+  "oauthConnectButton": {
+    "message": "🔗 連接 Notion 開始使用",
+    "description": "OAuth connect button text"
+  },
+  "oauthAuthorizing": {
+    "message": "🔄 正在連接 Notion...",
+    "description": "OAuth authorizing status"
+  },
+  "oauthAuthorizingDescription": {
+    "message": "請在彈出的 Notion 頁面完成授權",
+    "description": "OAuth authorizing description"
+  },
+  "oauthSettingUp": {
+    "message": "⏳ 正在自動設定資料庫...",
+    "description": "OAuth setting up status"
+  },
+  "oauthConnected": {
+    "message": "✅ 已連接到",
+    "description": "OAuth connected status"
+  },
+  "oauthDatabase": {
+    "message": "資料庫：",
+    "description": "OAuth database label"
+  },
+  "oauthAutoSelect": {
+    "message": "自動選擇",
+    "description": "OAuth auto select database"
+  },
+  "oauthDisconnect": {
+    "message": "🔓 中斷連接",
+    "description": "OAuth disconnect button"
+  },
+  "oauthStepConnected": {
+    "message": "✅ 已連接 Notion",
+    "description": "OAuth step: connected"
+  },
+  "oauthStepComplete": {
+    "message": "⏳ 準備完成",
+    "description": "OAuth step: complete"
+  },
+  "oauthSelectDatabase": {
+    "message": "📊 選擇資料庫：",
+    "description": "OAuth select database label"
+  },
+  "oauthLoadingDatabases": {
+    "message": "載入資料庫中...",
+    "description": "OAuth loading databases option"
+  },
+  "oauthNoDatabasesFound": {
+    "message": "未找到可用的資料庫",
+    "description": "OAuth no databases found message"
+  },
+  "oauthCreateNewDatabase": {
+    "message": "➕ 建立新資料庫",
+    "description": "OAuth create new database button"
+  },
+  "oauthDatabaseCompatible": {
+    "message": "✅ 完全相容",
+    "description": "OAuth database fully compatible status"
+  },
+  "oauthDatabasePartial": {
+    "message": "⚠️ 部分相容",
+    "description": "OAuth database partially compatible status"
+  },
+  "oauthDatabaseIncompatible": {
+    "message": "❌ 不相容",
+    "description": "OAuth database incompatible status"
+  },
+  "oauthCreateNewDatabaseLabel": {
+    "message": "➕ 或建立新資料庫：",
+    "description": "OAuth create new database label"
+  },
+  "oauthDatabaseNamePlaceholder": {
+    "message": "資料庫名稱 (選填)",
+    "description": "OAuth database name input placeholder"
+  },
+  "oauthCreateNewDatabaseBtn": {
+    "message": "➕ 建立",
+    "description": "OAuth create new database button text"
+  },
+  "oauthCreateDatabaseHelp": {
+    "message": "💡 不填寫名稱將使用預設名稱",
+    "description": "OAuth create database help text"
+  },
+  "oauthParentPage": {
+    "message": "父頁面：",
+    "description": "OAuth parent page label"
+  },
+  "oauthParentPageWorkspace": {
+    "message": "Workspace",
+    "description": "OAuth parent page workspace type"
+  },
+  "oauthParentPageSubpage": {
+    "message": "子頁面",
+    "description": "OAuth parent page subpage type"
+  },
+  "oauthConfirmCreateDatabase": {
+    "message": "尚未找到可用的資料庫，是否要建立新的職缺追蹤資料庫？",
+    "description": "OAuth confirm create database message"
+  },
+  "oauthConfirmCreateDatabaseTitle": {
+    "message": "建立資料庫確認",
+    "description": "OAuth confirm create database dialog title"
+  },
+  "oauthConfirmYes": {
+    "message": "建立資料庫",
+    "description": "OAuth confirm yes button"
+  },
+  "oauthConfirmNo": {
+    "message": "取消",
+    "description": "OAuth confirm no button"
+  },
+  "oauthConfirmAutoCreate": {
+    "message": "自動建立",
+    "description": "OAuth confirm auto create button"
+  },
+  "oauthConfirmCustomName": {
+    "message": "自定義名稱",
+    "description": "OAuth confirm custom name button"
+  },
+  "oauthDatabaseNamePrompt": {
+    "message": "請輸入資料庫名稱：",
+    "description": "OAuth database name input prompt"
+  },
+  "oauthDatabaseNameDefault": {
+    "message": "職缺追蹤資料庫",
+    "description": "OAuth default database name"
+  },
+  "oauthSetupComplete": {
+    "message": "OAuth 設定完成，繼續進行詳細設定",
+    "description": "OAuth setup complete message"
+  },
+  "oauthNewDatabaseCreated": {
+    "message": "已為您建立新資料庫，請確認設定",
+    "description": "New database created message"
+  },
+  "oauthSelectExistingDatabase": {
+    "message": "請在下方選擇要使用的資料庫",
+    "description": "Select existing database message"
   }
 }
